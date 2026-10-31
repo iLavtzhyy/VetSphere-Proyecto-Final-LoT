@@ -172,6 +172,7 @@ Ver `SEGURIDAD_ISO27001_27010.md` (carpeta del backend) para el análisis comple
 
 | Documento | Contenido |
 |---|---|
+| [INFORME_COMPLETO_VETSPHERE.md](INFORME_COMPLETO_VETSPHERE.md) | Informe integral: alcance, arquitectura, módulos, tecnologías, permisos, seguridad, pruebas y recomendaciones |
 | [docs/INSTALACION.md](docs/INSTALACION.md) | Requisitos, base de datos, variables de entorno, ejecución, solución de problemas |
 | [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md) | Diagramas (componentes, modelo de datos, JWT, SOAP) y decisiones de diseño |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de versiones y mejoras |
