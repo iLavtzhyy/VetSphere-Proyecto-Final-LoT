@@ -1,0 +1,108 @@
+    <section @fadeInUp class="page-shell">
+      <div class="page-header p-4 sm:p-5">
+        <div>
+          <p class="page-eyebrow">Resumen general</p>
+          <h1 class="text-2xl font-black text-slate-950 dark:text-white sm:text-3xl">Dashboard VetSphere</h1>
+          <p class="page-subtitle">Operacion diaria, pacientes, farmacia, facturacion y alertas clinicas en tiempo real.</p>
+        </div>
+        <a class="boton-primario px-4 py-2 text-sm" href="https://wa.me/593989188046?text=Hola%20VetSphere%2C%20necesito%20coordinar%20una%20consulta%20veterinaria." target="_blank">
+          <app-icono name="whatsapp" [size]="18"></app-icono>
+          WhatsApp
+        </a>
+      </div>
+
+      <app-cargador *ngIf="cargando"></app-cargador>
+
+      <ng-container *ngIf="!cargando">
+      <div class="grid gap-3 lg:grid-cols-4">
+        <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+          {{ resumen?.mascotasInternadas || 0 }} Mascotas en observación médica
+        </div>
+        <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
+          {{ resumen?.stockCritico?.length || 0 }} Medicamentos por agotar en farmacia
+        </div>
+        <div class="rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-3 text-xs font-bold text-cyan-800 dark:border-cyan-900/60 dark:bg-cyan-950/30 dark:text-cyan-200">
+          {{ resumen?.citasHoy || 0 }} Citas agendadas para hoy
+        </div>
+        <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+          Facturación en tiempo real activa
+        </div>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <article class="stat-card" *ngFor="let tarjeta of tarjetas">
+          <p class="stat-label">{{ tarjeta.titulo }}</p>
+          <p class="stat-value">{{ tarjeta.valor }}</p>
+          <p class="stat-note">{{ tarjeta.detalle }}</p>
+        </article>
+      </div>
+
+      <div class="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <article class="panel flex items-center gap-3 p-4" *ngFor="let servicio of servicios">
+          <div class="grid h-10 w-10 place-items-center rounded-lg bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300">
+            <app-icono [name]="servicio.icono" [size]="19"></app-icono>
+          </div>
+          <div>
+            <p class="text-xs font-black uppercase text-slate-500 dark:text-slate-400">{{ servicio.nombre }}</p>
+            <p class="text-2xl font-black text-slate-950 dark:text-white">{{ servicio.total }}</p>
+          </div>
+        </article>
+      </div>
+
+      <section class="grid gap-6 xl:grid-cols-2" aria-label="Gráficas del panel">
+        <article class="panel p-5">
+          <div class="flex items-center justify-between">
+            <h2 class="section-title">Citas - últimos 7 días</h2>
+            <button class="action-link" routerLink="/recepcion">Ver todas</button>
+          </div>
+          <app-grafica
+            [configuracion]="graficaCitas"
+            [resumen]="resumenCitas"
+            titulo="Gráfica de citas de los últimos 7 días"></app-grafica>
+        </article>
+
+        <article class="panel p-5">
+          <h2 class="section-title">Pacientes por especie</h2>
+          <app-grafica
+            [configuracion]="graficaEspecies"
+            [resumen]="resumenEspecies"
+            titulo="Distribución de pacientes por especie"></app-grafica>
+        </article>
+
+        <article class="panel p-5">
+          <h2 class="section-title">Facturación del mes</h2>
+          <app-grafica
+            [configuracion]="graficaFacturacion"
+            [resumen]="resumenFacturacion"
+            [cargando]="cargandoFacturas"
+            [error]="errorFacturas"
+            vacio="Aún no hay facturas emitidas este mes."
+            titulo="Total facturado por día en el mes en curso"></app-grafica>
+        </article>
+
+        <article class="panel p-5">
+          <h2 class="section-title">Productos con stock crítico</h2>
+          <app-grafica
+            [configuracion]="graficaStock"
+            [resumen]="resumenStock"
+            vacio="No hay productos con stock crítico."
+            titulo="Stock actual frente al stock mínimo en farmacia"></app-grafica>
+        </article>
+      </section>
+
+      <article class="panel p-5">
+        <h2 class="section-title">Cirugias recientes</h2>
+        <div class="mt-4 space-y-3">
+          <div class="soft-panel flex items-center justify-between" *ngFor="let c of resumen?.cirugiasRecientes">
+            <span class="font-bold text-slate-700 dark:text-slate-200">{{ c.procedimiento }} - {{ c.mascotaNombre }}</span>
+            <b [ngClass]="c.estado === 'FINALIZADA' ? 'text-emerald-700 dark:text-emerald-300' : 'text-cyan-700 dark:text-cyan-300'">
+              {{ c.estado }}
+            </b>
+          </div>
+          <p class="text-sm text-slate-500 dark:text-slate-400 p-2 text-center" *ngIf="!resumen?.cirugiasRecientes?.length">
+            No hay cirugías registradas recientemente.
+          </p>
+        </div>
+      </article>
+      </ng-container>
+    </section>

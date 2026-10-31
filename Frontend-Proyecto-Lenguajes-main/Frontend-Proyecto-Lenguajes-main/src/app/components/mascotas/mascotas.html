@@ -1,0 +1,287 @@
+    <section class="page-shell" @fadeInUp>
+      <div class="page-header">
+        <div>
+          <p class="page-eyebrow">Pacientes registrados</p>
+          <h1 class="page-title">Mascotas e historial clinico</h1>
+          <p class="page-subtitle">Gestiona pacientes, propietarios, ficha clinica, archivos medicos y linea de tiempo de cada mascota.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button class="boton-secundario" type="button" (click)="descargarExcel()" *ngIf="puedeGestionarClientes">
+            <app-icono name="file" [size]="18"></app-icono>
+            Excel financiero
+          </button>
+          <button class="boton-primario" type="button" (click)="nuevo()" *ngIf="puedeGestionarClientes">
+            <app-icono name="heart" [size]="18"></app-icono>
+            Nueva mascota
+          </button>
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200" *ngIf="mensajeFormulario">
+        {{ mensajeFormulario }}
+      </div>
+
+      <app-cargador *ngIf="cargando"></app-cargador>
+
+      <ng-container *ngIf="!cargando">
+      <div class="grid gap-6 xl:grid-cols-[360px_1fr]">
+        <aside class="panel p-4">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 class="section-title">Pacientes</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ mascotas.length }} mascotas registradas</p>
+            </div>
+            <button class="boton-icono" type="button" (click)="nuevo()" aria-label="Nueva mascota" *ngIf="puedeGestionarClientes">
+              <app-icono name="heart" [size]="20"></app-icono>
+            </button>
+          </div>
+
+          <label class="sr-only" for="mascotas-busqueda">Buscar mascotas</label>
+          <input id="mascotas-busqueda" class="campo mt-4 w-full" placeholder="Buscar mascota, especie o cliente..." [(ngModel)]="busqueda">
+
+          <div class="mt-4 max-h-[620px] space-y-2 overflow-y-auto pr-1">
+            <button class="flex w-full items-center gap-3 rounded-lg border p-3 text-left transition"
+                    [ngClass]="seleccionada?.id === mascota.id ? 'border-cyan-300 bg-cyan-50 dark:border-cyan-700 dark:bg-cyan-950/30' : 'border-slate-200 bg-white hover:border-cyan-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-700'"
+                    *ngFor="let mascota of filtradas"
+                    (click)="seleccionarMascota(mascota)">
+              <img class="block h-14 w-14 shrink-0 rounded-lg object-cover object-center ring-1 ring-slate-200 dark:ring-slate-700" [src]="fotoMascota(mascota)" [alt]="'Foto de ' + mascota.nombre" loading="lazy" decoding="async" (error)="imagenFallida($event)">
+              <span class="min-w-0">
+                <b class="block truncate text-slate-950 dark:text-white">{{ mascota.nombre }}</b>
+                <small class="block truncate text-slate-500 dark:text-slate-400">{{ mascota.especie }} - {{ mascota.propietario?.nombres }} {{ mascota.propietario?.apellidos }}</small>
+              </span>
+            </button>
+          </div>
+        </aside>
+
+        <div class="mascota-detalle-wrap">
+          <article class="panel overflow-hidden" *ngIf="seleccionada as mascota">
+            <div class="mascota-portada">
+              <div class="mascota-portada-foto">
+                <img class="h-full w-full rounded-2xl object-cover object-center" [src]="fotoMascota(mascota)" [alt]="'Foto de ' + mascota.nombre" decoding="async" (error)="imagenFallida($event)">
+              </div>
+              <div class="mascota-portada-info">
+                <p class="text-sm font-black uppercase text-cyan-700 dark:text-cyan-300">{{ mascota.raza || 'Paciente VetSphere' }}</p>
+                <h2 class="mt-2 text-4xl font-black sm:text-5xl">{{ mascota.nombre }}</h2>
+                <p class="mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
+                  {{ mascota.especie }} - {{ mascota.sexo }} - {{ mascota.color }} - {{ mascota.pesoKg || 0 }} kg
+                </p>
+                <div class="mt-5 flex flex-wrap gap-2">
+                  <span class="badge badge-info">{{ mascota.estado || 'ACTIVA' }}</span>
+                  <span class="badge bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">Propietario: {{ mascota.propietario?.nombres }} {{ mascota.propietario?.apellidos }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="detalle-grid">
+              <section>
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 class="section-title">Linea de tiempo clinica</h3>
+                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Consultas, vacunas, procedimientos y cirugias asociadas.</p>
+                  </div>
+                  <div class="acciones-paciente">
+                    <button class="boton-secundario" type="button" (click)="editar(mascota)" *ngIf="puedeGestionarClientes">
+                      <app-icono name="file" [size]="16"></app-icono>
+                      Editar
+                    </button>
+                    <button class="boton-secundario" type="button" (click)="descargarPdf(mascota.id)">
+                      <app-icono name="download" [size]="16"></app-icono>
+                      PDF
+                    </button>
+                    <button class="boton-secundario danger-soft" type="button" (click)="eliminar(mascota)" *ngIf="puedeGestionarClientes">
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mt-6 space-y-4 border-l-2 border-cyan-200 pl-6 dark:border-cyan-900" *ngIf="eventos(mascota).length; else sinEventos">
+                  <div class="relative rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" *ngFor="let evento of eventos(mascota)">
+                    <span class="absolute -left-[33px] top-5 h-4 w-4 rounded-full border-4 border-white bg-cyan-500 dark:border-slate-900"></span>
+                    <p class="text-xs font-black uppercase text-cyan-700 dark:text-cyan-300">{{ evento.fecha | date:'dd/MM/yyyy HH:mm' }} - {{ evento.tipo }}</p>
+                    <h4 class="mt-1 text-lg font-black text-slate-950 dark:text-white">{{ evento.titulo }}</h4>
+                    <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{{ evento.detalle }}</p>
+                  </div>
+                </div>
+                <ng-template #sinEventos>
+                  <div class="soft-panel mt-6 text-sm text-slate-500 dark:text-slate-400">Todavia no hay eventos clinicos registrados para esta mascota.</div>
+                </ng-template>
+              </section>
+              <aside class="side-clinico">
+                <div class="soft-panel ficha-card">
+                  <p class="form-label">Ficha rapida</p>
+                  <dl class="mt-4 space-y-3 text-sm">
+                    <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Nacimiento</dt><dd class="font-black text-slate-950 dark:text-white">{{ mascota.fechaNacimiento || 'Sin dato' }}</dd></div>
+                    <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Peso</dt><dd class="font-black text-slate-950 dark:text-white">{{ mascota.pesoKg || 0 }} kg</dd></div>
+                    <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Color</dt><dd class="font-black text-slate-950 dark:text-white">{{ mascota.color || 'Sin dato' }}</dd></div>
+                  </dl>
+                </div>
+
+                <div class="upload-card" *ngIf="puedeGestionarClientes"
+                     (drop)="soltar($event)" (dragover)="$event.preventDefault()">
+                  <div class="upload-icon">
+                    <app-icono name="file" [size]="24"></app-icono>
+                  </div>
+                  <p>Subir archivo medico</p>
+                  <span>Radiografias, fotos, resultados o documentos PDF vinculados a esta mascota.</span>
+                  <label class="upload-button">
+                    Seleccionar archivo
+                    <input type="file" (change)="seleccionar($event)">
+                  </label>
+                  <small *ngIf="mensajeArchivo">{{ mensajeArchivo }}</small>
+                </div>
+
+                <div class="soft-panel archivos-panel">
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <p class="form-label">Archivos clinicos</p>
+                      <h4 class="mt-1 text-lg font-black text-slate-950 dark:text-white">{{ archivosClinicos(mascota).length }} adjuntos</h4>
+                    </div>
+                    <app-icono name="file" [size]="22"></app-icono>
+                  </div>
+                  <div class="archivos-lista" *ngIf="archivosClinicos(mascota).length; else sinArchivos">
+                    <div class="archivo-item" *ngFor="let archivo of archivosClinicos(mascota)">
+                      <div class="archivo-tipo">{{ iconoArchivo(archivo.archivosUrl) }}</div>
+                      <span>
+                        <b>{{ nombreArchivo(archivo.archivosUrl) }}</b>
+                        <small>{{ archivo.fecha | date:'dd/MM/yyyy HH:mm' }}</small>
+                        <small>{{ archivo.motivo }}</small>
+                      </span>
+                      <div class="archivo-acciones">
+                        <button type="button" (click)="abrirArchivo(archivo.archivosUrl)" aria-label="Ver archivo">
+                          <app-icono name="eye" [size]="17"></app-icono>
+                        </button>
+                        <button type="button" *ngIf="puedeGestionarClientes"
+                                (click)="eliminarArchivo(mascota, archivo.id, nombreArchivo(archivo.archivosUrl))"
+                                aria-label="Eliminar archivo">
+                          <app-icono name="x" [size]="17"></app-icono>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <ng-template #sinArchivos>
+                    <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Aun no hay radiografias, resultados o documentos adjuntos.</p>
+                  </ng-template>
+                </div>
+              </aside>
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      <div class="fixed inset-0 z-50 bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+           *ngIf="formularioAbierto"
+           (click)="cerrarFormulario()">
+        <aside class="panel h-full w-full max-w-xl overflow-y-auto p-5 shadow-2xl sm:p-6"
+               (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">{{ editandoId ? 'Editar paciente' : 'Nuevo paciente' }}</p>
+              <h2 class="section-title">Formulario de mascota</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {{ editandoId ? 'Actualiza ficha, propietario y estado clinico.' : 'Registra una mascota nueva con su propietario y ficha inicial.' }}
+              </p>
+            </div>
+            <button class="boton-icono" type="button" (click)="cerrarFormulario()" aria-label="Cerrar formulario">
+              <app-icono name="x" [size]="18"></app-icono>
+            </button>
+          </div>
+
+          <form class="mt-5 grid gap-4" (ngSubmit)="guardar()">
+            <label class="grid gap-2" for="mascotas-nombre">
+              <span class="form-label">Nombre de la mascota</span>
+              <input id="mascotas-nombre" class="campo" name="nombre" [(ngModel)]="form.nombre" required>
+            </label>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="mascotas-especie">
+                <span class="form-label">Especie</span>
+                <select id="mascotas-especie" class="campo" name="especie" [(ngModel)]="form.especie">
+                  <option>Canino</option>
+                  <option>Felino</option>
+                  <option>Exotico</option>
+                  <option>Ave</option>
+                </select>
+              </label>
+              <label class="grid gap-2" for="mascotas-sexo">
+                <span class="form-label">Sexo</span>
+                <select id="mascotas-sexo" class="campo" name="sexo" [(ngModel)]="form.sexo">
+                  <option>Macho</option>
+                  <option>Hembra</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="mascotas-raza">
+                <span class="form-label">Raza</span>
+                <input id="mascotas-raza" class="campo" name="raza" [(ngModel)]="form.raza">
+              </label>
+              <label class="grid gap-2" for="mascotas-color">
+                <span class="form-label">Color</span>
+                <input id="mascotas-color" class="campo" name="color" [(ngModel)]="form.color">
+              </label>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="mascotas-pesoKg">
+                <span class="form-label">Peso kg</span>
+                <input id="mascotas-pesoKg" class="campo" type="number" step="0.1" name="pesoKg" [(ngModel)]="form.pesoKg">
+              </label>
+              <label class="grid gap-2" for="mascotas-fechaNacimiento">
+                <span class="form-label">Nacimiento</span>
+                <input id="mascotas-fechaNacimiento" class="campo" type="date" name="fechaNacimiento" [(ngModel)]="form.fechaNacimiento">
+              </label>
+            </div>
+            <label class="grid gap-2" for="mascotas-propietarioId">
+              <span class="form-label">Cliente propietario</span>
+              <select id="mascotas-propietarioId" class="campo" name="propietarioId" [(ngModel)]="form.propietarioId" required>
+                <option [ngValue]="null">Seleccionar cliente</option>
+                <option *ngFor="let cliente of clientes" [ngValue]="cliente.id">{{ cliente.nombres }} {{ cliente.apellidos }} - {{ cliente.email }}</option>
+              </select>
+            </label>
+            <label class="grid gap-2" for="mascotas-estado">
+              <span class="form-label">Estado clinico</span>
+              <select id="mascotas-estado" class="campo" name="estado" [(ngModel)]="form.estado">
+                <option>ACTIVA</option>
+                <option>INTERNADA</option>
+                <option>EN_CONTROL</option>
+                <option>INACTIVA</option>
+              </select>
+            </label>
+            <label class="grid gap-2" *ngIf="!editandoId">
+              <span class="form-label">Foto del paciente</span>
+              <input class="campo" type="file" accept="image/*" (change)="fotoFormulario($event)">
+            </label>
+            <button class="boton-primario w-full" type="submit">
+              {{ editandoId ? 'Guardar cambios' : 'Registrar mascota' }}
+            </button>
+            <p class="text-sm font-bold text-emerald-700 dark:text-emerald-300" *ngIf="mensajeFormulario">{{ mensajeFormulario }}</p>
+          </form>
+        </aside>
+      </div>
+      </ng-container>
+  <div class="confirmacion-overlay" *ngIf="mascotaPendienteEliminar as mascota" role="presentation" (click)="cancelarEliminacion()">
+    <section class="confirmacion-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirmacion-titulo" aria-describedby="confirmacion-descripcion" (click)="$event.stopPropagation()">
+      <div class="confirmacion-icono"><app-icono name="alert" [size]="24"></app-icono></div>
+      <p class="page-eyebrow">Confirmar baja</p>
+      <h2 id="confirmacion-titulo">¿Dar de baja a {{ mascota.nombre }}?</h2>
+      <p id="confirmacion-descripcion">La ficha dejará de aparecer entre las mascotas activas. Se conservarán su historial clínico, hospitalizaciones y facturas.</p>
+      <div class="confirmacion-acciones">
+        <button class="boton-secundario" type="button" (click)="cancelarEliminacion()">Cancelar</button>
+        <button class="boton-peligro" type="button" (click)="confirmarEliminacion()">Sí, dar de baja</button>
+      </div>
+    </section>
+  </div>
+  <div class="confirmacion-overlay" *ngIf="archivoPendienteEliminar as archivo" role="presentation" (click)="cancelarEliminacionArchivo()">
+    <section class="confirmacion-dialog confirmacion-archivo" role="alertdialog" aria-modal="true" aria-labelledby="confirmacion-archivo-titulo" aria-describedby="confirmacion-archivo-descripcion" (click)="$event.stopPropagation()">
+      <div class="confirmacion-icono"><app-icono name="alert" [size]="24"></app-icono></div>
+      <p class="page-eyebrow">Archivo del historial clínico</p>
+      <h2 id="confirmacion-archivo-titulo">¿Eliminar este archivo?</h2>
+      <p id="confirmacion-archivo-descripcion">Se quitará <strong>{{ archivo.nombre }}</strong> del historial de {{ archivo.mascota.nombre }}. Esta acción no se puede deshacer.</p>
+      <div class="confirmacion-acciones">
+        <button class="boton-secundario" type="button" (click)="cancelarEliminacionArchivo()" [disabled]="procesandoEliminacionArchivo">Cancelar</button>
+        <button class="boton-peligro" type="button" (click)="confirmarEliminacionArchivo()" [disabled]="procesandoEliminacionArchivo">
+          {{ procesandoEliminacionArchivo ? 'Eliminando…' : 'Sí, eliminar archivo' }}
+        </button>
+      </div>
+    </section>
+  </div>
+    </section>

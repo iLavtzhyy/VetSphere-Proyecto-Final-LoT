@@ -1,0 +1,192 @@
+/* =========================================================
+   VetSphere - Facturacion & Reportes Unificados
+   Edita aqui colores, espacios y estilo visual de ambos modulos.
+   ========================================================= */
+
+:host {
+  --factura-primary: #0891b2;
+  --factura-primary-dark: #075985;
+  --factura-success: #059669;
+  --factura-warning: #d97706;
+  --factura-bg: #f6fafc;
+  --factura-card: #ffffff;
+  --factura-border: #dce8ef;
+  --factura-text: #0f172a;
+  --factura-muted: #64748b;
+  --factura-shadow: 0 18px 45px rgba(15, 23, 42, .08);
+  display: block;
+}
+
+:host-context(.dark) {
+  --factura-bg: #07111f;
+  --factura-card: #101b2b;
+  --factura-border: #233244;
+  --factura-text: #f8fafc;
+  --factura-muted: #94a3b8;
+  --factura-shadow: 0 18px 45px rgba(0, 0, 0, .28);
+}
+
+.facturacion-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+  width: 100%;
+  container-type: inline-size;
+  container-name: reports-content;
+  color: var(--factura-text);
+}
+
+.facturacion-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--factura-border);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at top right, rgba(34, 211, 238, .16), transparent 22rem),
+    var(--factura-card);
+  box-shadow: var(--factura-shadow);
+  padding: 1.35rem;
+  min-width: 0;
+}
+
+.facturacion-hero > div:first-child { min-width: 0; }
+
+.facturacion-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+.facturacion-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  min-width: 0;
+  width: 100%;
+}
+
+.facturas-panel,
+.resumen-panel {
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--factura-border);
+  border-radius: 1rem;
+  background: var(--factura-card);
+  box-shadow: var(--factura-shadow);
+}
+
+.facturas-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  font-size: .86rem;
+}
+
+:host-context(.dark) .facturas-table th {
+  background: #0b1422;
+  color: #cbd5e1;
+}
+
+:host-context(.dark) .facturas-table tbody tr:hover,
+:host-context(.dark) .fila-seleccionada {
+  background: rgba(8, 145, 178, .14);
+}
+
+.modal-comprobante {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, .62);
+  padding: 1rem;
+  backdrop-filter: blur(6px);
+}
+
+.comprobante-card {
+  width: min(100%, 900px);
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 1.25rem;
+  background: var(--factura-card);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .34);
+}
+
+.comprobante-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem;
+  color: #fff;
+  background: linear-gradient(135deg, #075985, #0891b2 58%, #14b8a6);
+}
+
+:host-context(.dark) .comprobante-info article {
+  background: #0b1422;
+}
+
+@media (min-width: 1700px) {
+  .facturacion-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 23rem);
+  }
+  .resumen-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .facturacion-hero,
+  .facturas-panel-header,
+  .comprobante-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .facturacion-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .facturacion-hero > .hero-chip { align-self: flex-start; }
+
+  .comprobante-info {
+    grid-template-columns: 1fr;
+  }
+
+  .mini-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .integraciones-grid { grid-template-columns: 1fr !important; }
+}
+
+.documento-panel {
+  display: grid;
+  justify-items: start;
+  gap: .75rem;
+  padding: 1.25rem;
+  border: 1px solid var(--factura-border);
+  border-radius: 1rem;
+  background: var(--factura-card);
+  box-shadow: var(--factura-shadow);
+}
+
+@container reports-content (max-width: 760px) {
+  .facturas-panel-header { align-items: stretch; flex-direction: column; }
+  .facturas-panel-header input { width: 100% !important; max-width: none !important; }
+}

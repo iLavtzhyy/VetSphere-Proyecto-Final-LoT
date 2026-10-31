@@ -1,0 +1,7 @@
+<div [class]="centrado ? 'flex flex-col items-center justify-center gap-3 py-10 text-slate-500 dark:text-slate-400' : 'flex flex-col items-center gap-2 text-slate-500 dark:text-slate-400'">
+  <svg class="h-10 w-10 animate-spin text-cyan-700 dark:text-cyan-300" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+    <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
+  </svg>
+  <p class="text-sm font-bold" role="status">{{ texto }}</p>
+</div>

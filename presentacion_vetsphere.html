@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VetSphere — Presentación del Proyecto</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ─── RESET & BASE ─── */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #e2e8f0;
+    }
+
+    /* ─── SLIDE CONTAINER ─── */
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 80px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .5s ease, transform .5s ease;
+      transform: translateX(40px);
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+
+    /* ─── BACKGROUNDS ─── */
+    .bg-gradient-1 {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f766e 100%);
+    }
+
+    .bg-gradient-2 {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #312e81 100%);
+    }
+
+    .bg-gradient-3 {
+      background: linear-gradient(135deg, #0f172a 0%, #064e3b 50%, #0f172a 100%);
+    }
+
+    .bg-gradient-4 {
+      background: linear-gradient(135deg, #0f172a 0%, #4c1d95 50%, #0f172a 100%);
+    }
+
+    .bg-gradient-5 {
+      background: linear-gradient(135deg, #0f172a 0%, #7c2d12 60%, #0f172a 100%);
+    }
+
+    .bg-gradient-6 {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #312e81 100%);
+    }
+
+    /* ─── TYPOGRAPHY ─── */
+    .slide-title {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(90deg, #38bdf8, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .slide-subtitle {
+      font-size: 1.25rem;
+      color: #94a3b8;
+      font-weight: 400;
+      margin-bottom: 40px;
+      text-align: center;
+      max-width: 700px;
+    }
+
+    .section-label {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #38bdf8;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #f1f5f9;
+      text-align: center;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #38bdf8;
+      margin-bottom: 6px;
+    }
+
+    /* ─── CARDS & GRIDS ─── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(8px);
+      transition: transform .25s, border-color .25s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(56, 189, 248, .4);
+    }
+
+    .card p,
+    .card li {
+      font-size: .88rem;
+      color: #cbd5e1;
+      line-height: 1.55;
+    }
+
+    .card ul {
+      padding-left: 18px;
+    }
+
+    .card ul li {
+      margin-bottom: 4px;
+    }
+
+    /* ─── STAT CARDS ─── */
+    .stat {
+      text-align: center;
+      padding: 28px 16px;
+    }
+
+    .stat .number {
+      font-size: 2.8rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #38bdf8, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat .label {
+      font-size: .8rem;
+      color: #94a3b8;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ─── QUALITY BARS ─── */
+    .quality-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .quality-row .qlabel {
+      width: 140px;
+      font-size: .85rem;
+      color: #94a3b8;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .quality-row .bar-bg {
+      flex: 1;
+      height: 26px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 13px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .quality-row .bar-fill {
+      height: 100%;
+      border-radius: 13px;
+      transition: width 1s ease;
+    }
+
+    .quality-row .bar-value {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: .78rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .fill-green {
+      background: linear-gradient(90deg, #34d399, #22c55e);
+    }
+
+    .fill-yellow {
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    }
+
+    .fill-blue {
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+    }
+
+    /* ─── TAG / BADGE ─── */
+    .tag {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+      background: rgba(56, 189, 248, .15);
+      color: #38bdf8;
+      margin: 3px;
+    }
+
+    .tag.green {
+      background: rgba(52, 211, 153, .15);
+      color: #34d399;
+    }
+
+    .tag.purple {
+      background: rgba(139, 92, 246, .15);
+      color: #a78bfa;
+    }
+
+    .tag.orange {
+      background: rgba(251, 146, 60, .15);
+      color: #fb923c;
+    }
+
+    /* ─── ARCH DIAGRAM ─── */
+    .arch-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      border-radius: 14px;
+      text-align: center;
+      min-height: 80px;
+    }
+
+    .arch-box.frontend {
+      background: linear-gradient(135deg, rgba(56, 189, 248, .2), rgba(56, 189, 248, .05));
+      border: 1px solid rgba(56, 189, 248, .3);
+    }
+
+    .arch-box.backend {
+      background: linear-gradient(135deg, rgba(52, 211, 153, .2), rgba(52, 211, 153, .05));
+      border: 1px solid rgba(52, 211, 153, .3);
+    }
+
+    .arch-box.soap {
+      background: linear-gradient(135deg, rgba(139, 92, 246, .2), rgba(139, 92, 246, .05));
+      border: 1px solid rgba(139, 92, 246, .3);
+    }
+
+    .arch-box.db {
+      background: linear-gradient(135deg, rgba(251, 146, 60, .2), rgba(251, 146, 60, .05));
+      border: 1px solid rgba(251, 146, 60, .3);
+    }
+
+    .arch-label {
+      font-size: .7rem;
+      color: #94a3b8;
+    }
+
+    .arch-name {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .arch-arrow {
+      font-size: 1.6rem;
+      color: #475569;
+    }
+
+    /* ─── FLOW ─── */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 16px 0;
+    }
+
+    .flow-step {
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: .82rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .12);
+    }
+
+    .flow-arrow {
+      font-size: 1.2rem;
+      color: #38bdf8;
+    }
+
+    /* ─── ROLE TABLE ─── */
+    .role-table {
+      width: 100%;
+      max-width: 900px;
+      border-collapse: collapse;
+    }
+
+    .role-table th {
+      background: rgba(56, 189, 248, .15);
+      color: #38bdf8;
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .role-table td {
+      padding: 10px 12px;
+      font-size: .85rem;
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
+      color: #cbd5e1;
+    }
+
+    .role-table tr:hover td {
+      background: rgba(255, 255, 255, .03);
+    }
+
+    /* ─── NAV ─── */
+    .nav {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(15, 23, 42, .85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 50px;
+      padding: 10px 24px;
+      z-index: 100;
+    }
+
+    .nav button {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.3rem;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s, color .2s;
+    }
+
+    .nav button:hover {
+      background: rgba(56, 189, 248, .15);
+      color: #38bdf8;
+    }
+
+    .nav .counter {
+      font-size: .85rem;
+      color: #64748b;
+      font-weight: 600;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    /* ─── PROGRESS ─── */
+    .progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #38bdf8, #34d399);
+      transition: width .4s ease;
+      z-index: 200;
+    }
+
+    /* ─── TITLE PAGE EXTRAS ─── */
+    .hero-title {
+      font-size: 4.5rem;
+      font-weight: 900;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, #38bdf8 0%, #34d399 50%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .hero-sub {
+      font-size: 1.4rem;
+      color: #94a3b8;
+      text-align: center;
+      margin-top: 16px;
+      max-width: 600px;
+    }
+
+    .hero-tags {
+      margin-top: 28px;
+      text-align: center;
+    }
+
+    .hero-meta {
+      font-size: .82rem;
+      color: #475569;
+      margin-top: 36px;
+      text-align: center;
+    }
+
+    /* ─── GLOW CIRCLE DECORATION ─── */
+    .glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: .15;
+      pointer-events: none;
+    }
+
+    .glow.blue {
+      width: 400px;
+      height: 400px;
+      background: #38bdf8;
+      top: -100px;
+      right: -100px;
+    }
+
+    .glow.green {
+      width: 350px;
+      height: 350px;
+      background: #34d399;
+      bottom: -80px;
+      left: -80px;
+    }
+
+    .glow.purple {
+      width: 300px;
+      height: 300px;
+      background: #a78bfa;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ─── LIST STYLED ─── */
+    .check-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .check-list li {
+      padding: 6px 0;
+      font-size: .88rem;
+      color: #cbd5e1;
+    }
+
+    .check-list li::before {
+      content: "✓ ";
+      color: #34d399;
+      font-weight: 700;
+    }
+
+    .x-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .x-list li {
+      padding: 5px 0;
+      font-size: .82rem;
+      color: #cbd5e1;
+    }
+
+    .x-list li.critical::before {
+      content: "🔴 ";
+    }
+
+    .x-list li.high::before {
+      content: "🟠 ";
+    }
+
+    .x-list li.medium::before {
+      content: "🟡 ";
+    }
+
+    /* ─── KEYBOARD HINT ─── */
+    .kbd {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .15);
+      font-size: .7rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="progress" id="progress"></div>
+
+  <div class="deck" id="deck">
+
+    <!-- ════════════════════════ SLIDE 1: PORTADA ════════════════════════ -->
+    <div class="slide bg-gradient-1 active" data-slide="0">
+      <div class="glow blue"></div>
+      <div class="glow green"></div>
+      <div class="section-label">Proyecto de Calidad de Software</div>
+      <div class="hero-title">VetSphere</div>
+      <div class="hero-sub">Sistema de Información Clínica Veterinaria — Arquitectura Híbrida REST + SOAP</div>
+      <div class="hero-tags">
+        <span class="tag">Spring Boot 3</span>
+        <span class="tag green">Angular 17</span>
+        <span class="tag purple">Apache CXF</span>
+        <span class="tag orange">SQL Server</span>
+        <span class="tag">JWT</span>
+        <span class="tag purple">WS-Security</span>
+      </div>
+      <div class="hero-meta">ITQ — Calidad de software &nbsp;·&nbsp; Octubre 2026</div>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 2: ¿QUÉ ES? ════════════════════════ -->
+    <div class="slide bg-gradient-2" data-slide="1">
+      <div class="glow purple"></div>
+      <div class="section-label">Visión General</div>
+      <h2>¿Qué es VetSphere?</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>🏥 Gestión Clínica Completa</h3>
+          <p>Sistema integral para clínicas veterinarias que cubre: agenda de citas, historial clínico, cirugías,
+            hospitalizaciones, laboratorio, facturación, farmacia e inventario.</p>
+        </div>
+        <div class="card">
+          <h3>🔗 Integración B2B vía SOAP</h3>
+          <p>Comunicación segura con proveedores externos mediante servicios web SOAP con WS-Security (UsernameToken +
+            PasswordDigest) para actualizaciones de inventario.</p>
+        </div>
+        <div class="card">
+          <h3>👥 Multi-Rol con JWT</h3>
+          <p>4 roles diferenciados: Administrador, Veterinario, Recepcionista y Cliente. Cada uno con permisos
+            específicos validados en backend con Spring Security.</p>
+        </div>
+        <div class="card">
+          <h3>📊 Reportes Automatizados</h3>
+          <p>Generación de reportes en PDF (OpenPDF) y Excel (Apache POI) para historial clínico, finanzas y
+            comprobantes de pago directos al navegador.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 3: ARQUITECTURA ════════════════════════ -->
+    <div class="slide bg-gradient-3" data-slide="2">
+      <div class="glow blue"></div>
+      <div class="section-label">Diseño del Sistema</div>
+      <h2>Arquitectura del Ecosistema</h2>
+      <div
+        style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 1050px;">
+        <div class="arch-box frontend" style="width: 200px;">
+          <div class="arch-label">Frontend</div>
+          <div class="arch-name" style="color:#38bdf8;">Angular 17</div>
+          <div class="arch-label">:4200 · TailwindCSS</div>
+        </div>
+        <div class="arch-arrow">⟶</div>
+        <div class="arch-box backend" style="width: 240px;">
+          <div class="arch-label">Backend Principal</div>
+          <div class="arch-name" style="color:#34d399;">Spring Boot 3</div>
+          <div class="arch-label">:8080 · REST + SOAP</div>
+        </div>
+        <div class="arch-arrow">⟶</div>
+        <div class="arch-box db" style="width: 200px;">
+          <div class="arch-label">Base de Datos</div>
+          <div class="arch-name" style="color:#fb923c;">SQL Server</div>
+          <div class="arch-label">:1433 · VeterinariaDB</div>
+        </div>
+      </div>
+      <div style="margin: 20px 0;">
+        <div class="arch-arrow" style="font-size: 1.2rem;">↕ SOAP WS-Security</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 20px; justify-content: center;">
+        <div class="arch-box soap" style="width: 240px;">
+          <div class="arch-label">Mini SOAP Client</div>
+          <div class="arch-name" style="color:#a78bfa;">Spring Boot 3</div>
+          <div class="arch-label">:8090 · VeterinariaMiniDB</div>
+        </div>
+        <div class="arch-arrow">⟶</div>
+        <div class="arch-box db" style="width: 200px;">
+          <div class="arch-label">Base de Datos</div>
+          <div class="arch-name" style="color:#fb923c;">SQL Server</div>
+          <div class="arch-label">:1433 · VeterinariaMiniDB</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 4: STACK TECNOLÓGICO ════════════════════════ -->
+    <div class="slide bg-gradient-4" data-slide="3">
+      <div class="glow green"></div>
+      <div class="section-label">Tecnologías</div>
+      <h2>Stack Tecnológico</h2>
+      <div class="grid-3">
+        <div class="card" style="text-align:center;">
+          <h3>☕ Backend</h3>
+          <p style="margin:8px 0;">
+            <span class="tag green">Java 17</span>
+            <span class="tag green">Spring Boot 3.3</span>
+            <span class="tag green">Spring Security</span>
+            <span class="tag green">Hibernate / JPA</span>
+            <span class="tag green">Apache CXF</span>
+            <span class="tag green">Apache POI</span>
+            <span class="tag green">OpenPDF</span>
+            <span class="tag green">Lombok</span>
+          </p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <h3>🌐 Frontend</h3>
+          <p style="margin:8px 0;">
+            <span class="tag">Angular 17</span>
+            <span class="tag">TypeScript 5.4</span>
+            <span class="tag">TailwindCSS 3</span>
+            <span class="tag">RxJS 7</span>
+            <span class="tag">Lucide Icons</span>
+            <span class="tag">HttpClient</span>
+            <span class="tag">Interceptors</span>
+          </p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <h3>🛡️ Seguridad</h3>
+          <p style="margin:8px 0;">
+            <span class="tag purple">JWT (HMAC-SHA)</span>
+            <span class="tag purple">BCrypt</span>
+            <span class="tag purple">WS-Security</span>
+            <span class="tag purple">UsernameToken</span>
+            <span class="tag purple">PasswordDigest</span>
+            <span class="tag purple">JAAS</span>
+            <span class="tag purple">XXE Protection</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 5: MODELO DE DATOS ════════════════════════ -->
+    <div class="slide bg-gradient-6" data-slide="4">
+      <div class="glow purple"></div>
+      <div class="section-label">Persistencia</div>
+      <h2>Modelo de Base de Datos (Entidades JPA)</h2>
+      <div class="grid-4">
+        <div class="card stat">
+          <div class="number" style="font-size:1.5rem;">👤</div>
+          <div class="label" style="color:#38bdf8;">Usuario</div>
+          <p style="font-size:.75rem; margin-top:4px;">Credenciales, perfil, estado activo</p>
+        </div>
+        <div class="card stat">
+          <div class="number" style="font-size:1.5rem;">🐾</div>
+          <div class="label" style="color:#34d399;">Mascota</div>
+          <p style="font-size:.75rem; margin-top:4px;">Especie, raza, peso, dueño</p>
+        </div>
+        <div class="card stat">
+          <div class="number" style="font-size:1.5rem;">📅</div>
+          <div class="label" style="color:#a78bfa;">Cita</div>
+          <p style="font-size:.75rem; margin-top:4px;">Fecha, motivo, veterinario, estado</p>
+        </div>
+        <div class="card stat">
+          <div class="number" style="font-size:1.5rem;">📋</div>
+          <div class="label" style="color:#fb923c;">Historial Clínico</div>
+          <p style="font-size:.75rem; margin-top:4px;">Diagnóstico, tratamiento, notas</p>
+        </div>
+        <div class="card stat">
+          <div class="number" style="font-size:1.5rem;">💰</div>
+          <div class="label" style="color:#38bdf8;">Factura</div>
+          <p style="font-size:.75rem; margin-top:4px;">Cobros, conceptos, detalle</p>
+        </div>
+        <div class="card stat">
+          <div class="number" style="font-size:1.5rem;">💊</div>
+          <div class="label" style="color:#34d399;">Producto</div>
+          <p style="font-size:.75rem; margin-top:4px;">Inventario, stock, precio</p>
+        </div>
+        <div class="card stat">
+          <div class="number" style="font-size:1.5rem;">🏨</div>
+          <div class="label" style="color:#a78bfa;">Hospitalización</div>
+          <p style="font-size:.75rem; margin-top:4px;">Internamientos de pacientes</p>
+        </div>
+        <div class="card stat">
+          <div class="number" style="font-size:1.5rem;">🔬</div>
+          <div class="label" style="color:#fb923c;">Cirugía / Lab</div>
+          <p style="font-size:.75rem; margin-top:4px;">Procedimientos, órdenes</p>
+        </div>
+      </div>
+      <p style="color:#64748b; font-size:.8rem; margin-top:16px; text-align:center;">Relaciones: Usuario ↔ Mascota ↔
+        Cita → Factura | Mascota ↔ Historial → Orden Lab | Factura ↔ Producto</p>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 6: ROLES ════════════════════════ -->
+    <div class="slide bg-gradient-2" data-slide="5">
+      <div class="glow blue"></div>
+      <div class="section-label">Control de Acceso</div>
+      <h2>Sistema de Roles y Permisos</h2>
+      <table class="role-table">
+        <tr>
+          <th>Rol</th>
+          <th>Acceso Principal</th>
+          <th>Módulos</th>
+        </tr>
+        <tr>
+          <td><span class="tag orange">ADMIN</span></td>
+          <td>Gestión total del sistema</td>
+          <td>Usuarios, reportes, facturación, administración, inventario completo</td>
+        </tr>
+        <tr>
+          <td><span class="tag green">VETERINARIO</span></td>
+          <td>Atención médica clínica</td>
+          <td>Consultas, historial clínico, cirugías, laboratorio, hospitalización</td>
+        </tr>
+        <tr>
+          <td><span class="tag">RECEPCIONISTA</span></td>
+          <td>Atención al cliente</td>
+          <td>Citas, clientes, admisión, agenda</td>
+        </tr>
+        <tr>
+          <td><span class="tag purple">CLIENTE</span></td>
+          <td>Acceso personal</td>
+          <td>Sus datos, mascotas propias, historial de citas</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 7: SEGURIDAD JWT ════════════════════════ -->
+    <div class="slide bg-gradient-3" data-slide="6">
+      <div class="glow purple"></div>
+      <div class="section-label">Seguridad REST</div>
+      <h2>Flujo de Autenticación JWT</h2>
+      <div class="flow">
+        <div class="flow-step">1. Login<br><small style="color:#94a3b8;">POST /api/auth/login</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">2. Validar<br><small style="color:#94a3b8;">BCrypt + SQL Server</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">3. Generar JWT<br><small style="color:#94a3b8;">Claims + Roles + Expiry</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">4. localStorage<br><small style="color:#94a3b8;">Token en Angular</small></div>
+      </div>
+      <div class="flow" style="margin-top:8px;">
+        <div class="flow-step">5. Interceptor<br><small style="color:#94a3b8;">Authorization: Bearer</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">6. JwtFilter<br><small style="color:#94a3b8;">Validar firma + exp</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">7. SecurityContext<br><small style="color:#94a3b8;">Autorización por rol</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" style="border-color: rgba(52,211,153,.4);">✅ 200 OK<br><small
+            style="color:#34d399;">Acceso concedido</small></div>
+      </div>
+      <div class="grid-2" style="margin-top:28px;">
+        <div class="card">
+          <h3>🔐 Protecciones Implementadas</h3>
+          <ul class="check-list">
+            <li>Contraseñas hasheadas con BCrypt</li>
+            <li>Tokens firmados con HMAC-SHA-512</li>
+            <li>CORS configurado por variable de entorno</li>
+            <li>Verificación OTP por correo electrónico</li>
+            <li>XML protegido contra XXE</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>📧 Doble Factor (OTP)</h3>
+          <ul class="check-list">
+            <li>Código de 6 dígitos por email</li>
+            <li>Expiración a 5 minutos</li>
+            <li>JavaMail con plantillas HTML</li>
+            <li>Tabla CodigoVerificacion en SQL</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 8: SOAP ════════════════════════ -->
+    <div class="slide bg-gradient-4" data-slide="7">
+      <div class="glow green"></div>
+      <div class="section-label">Integración B2B</div>
+      <h2>Servicios SOAP con WS-Security</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>📡 Endpoint SOAP</h3>
+          <p style="margin-bottom:10px;">Expuesto en <code style="color:#38bdf8;">/soap/productos</code></p>
+          <ul class="check-list">
+            <li>Consultar producto por código</li>
+            <li>Crear nuevos productos</li>
+            <li>Actualizar stock y precios</li>
+            <li>WSDL auto-generado por CXF</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>🔒 WS-Security (JAAS)</h3>
+          <p style="margin-bottom:10px;">Seguridad a nivel de mensaje XML</p>
+          <ul class="check-list">
+            <li>Header &lt;wsse:Security&gt;</li>
+            <li>UsernameToken + PasswordDigest</li>
+            <li>WSS4J interceptor valida firma</li>
+            <li>CallbackHandler con JAAS</li>
+            <li>Nonce + Created anti-replay</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top: 20px; max-width: 1000px; width: 100%;">
+        <h3>🔄 Mini SOAP Client (:8090)</h3>
+        <p>Aplicación independiente que simula un proveedor externo. Conecta su propia base <code
+            style="color:#fb923c;">VeterinariaMiniDB</code> con el SOAP del backend principal para transferencias de
+          stock bidireccionales. Protegida con un token API de 64 caracteres.</p>
+      </div>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 9: FRONTEND ════════════════════════ -->
+    <div class="slide bg-gradient-1" data-slide="8">
+      <div class="glow purple"></div>
+      <div class="section-label">Interfaz de Usuario</div>
+      <h2>Frontend Angular — 20 Componentes</h2>
+      <div class="grid-4">
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">📅</div>
+          <p style="font-size:.78rem;">Agendar Cita</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">👥</div>
+          <p style="font-size:.78rem;">Clientes</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">🩺</div>
+          <p style="font-size:.78rem;">Consultas</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">📊</div>
+          <p style="font-size:.78rem;">Dashboard</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">💰</div>
+          <p style="font-size:.78rem;">Facturación</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">💊</div>
+          <p style="font-size:.78rem;">Farmacia</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">🏨</div>
+          <p style="font-size:.78rem;">Hospitalización</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">🔬</div>
+          <p style="font-size:.78rem;">Laboratorio</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">🐾</div>
+          <p style="font-size:.78rem;">Mascotas</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">✂️</div>
+          <p style="font-size:.78rem;">Cirugías</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">📝</div>
+          <p style="font-size:.78rem;">Registro</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">📈</div>
+          <p style="font-size:.78rem;">Reportes</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">🔐</div>
+          <p style="font-size:.78rem;">Login</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">⚙️</div>
+          <p style="font-size:.78rem;">Administración</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">👨‍⚕️</div>
+          <p style="font-size:.78rem;">Veterinarios</p>
+        </div>
+        <div class="card" style="text-align:center;padding:14px;">
+          <div style="font-size:1.3rem;">📚</div>
+          <p style="font-size:.78rem;">Documentación</p>
+        </div>
+      </div>
+      <p style="color:#64748b; font-size:.8rem; margin-top:16px;">Cada componente: <code>.ts</code> + <code>.html</code>
+        + <code>.css</code> + <code>.spec.ts</code> · Interceptor JWT automático · Enrutamiento modular</p>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 10: MÉTRICAS ════════════════════════ -->
+    <div class="slide bg-gradient-2" data-slide="9">
+      <div class="glow blue"></div>
+      <div class="section-label">Análisis Cuantitativo</div>
+      <h2>Métricas del Código</h2>
+      <div class="grid-4" style="margin-bottom:28px;">
+        <div class="card stat">
+          <div class="number">246</div>
+          <div class="label">Archivos</div>
+        </div>
+        <div class="card stat">
+          <div class="number">30K</div>
+          <div class="label">Líneas Totales</div>
+        </div>
+        <div class="card stat">
+          <div class="number">663</div>
+          <div class="label">Funciones</div>
+        </div>
+        <div class="card stat">
+          <div class="number">135</div>
+          <div class="label">Clases</div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card" style="text-align:center;">
+          <h3>Lenguajes Detectados</h3>
+          <p style="margin:8px 0;">
+            <span class="tag green">Java — 109</span>
+            <span class="tag">TypeScript — 56</span>
+            <span class="tag orange">XML — 28</span>
+            <span class="tag purple">HTML — 26</span>
+            <span class="tag">CSS — 23</span>
+          </p>
+        </div>
+        <div class="card stat">
+          <div class="number" style="font-size: 2rem;">2.1</div>
+          <div class="label">Complejidad Media</div>
+          <p style="font-size:.75rem; color:#34d399; margin-top:6px;">✓ Baja complejidad</p>
+        </div>
+        <div class="card stat">
+          <div class="number" style="font-size: 2rem;">1,389</div>
+          <div class="label">Complejidad Ciclomática</div>
+          <p style="font-size:.75rem; color:#94a3b8; margin-top:6px;">Total acumulada</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 11: CALIDAD ISO 25010 ════════════════════════ -->
+    <div class="slide bg-gradient-5" data-slide="10">
+      <div class="glow blue"></div>
+      <div class="section-label">ISO/IEC 25010</div>
+      <h2>Evaluación de Calidad de Software</h2>
+      <div style="display:flex; align-items:center; gap:40px; margin-bottom:30px;">
+        <div style="text-align:center;">
+          <div
+            style="font-size: 5rem; font-weight: 900; background: linear-gradient(135deg, #34d399, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            94</div>
+          <div style="color:#94a3b8; font-size: .85rem;">/ 100 — Calidad Global</div>
+        </div>
+        <div style="flex:1; max-width: 650px;">
+          <div class="quality-row">
+            <div class="qlabel">Funcionalidad</div>
+            <div class="bar-bg">
+              <div class="bar-fill fill-green" style="width:100%;"></div>
+              <div class="bar-value">100</div>
+            </div>
+          </div>
+          <div class="quality-row">
+            <div class="qlabel">Fiabilidad</div>
+            <div class="bar-bg">
+              <div class="bar-fill fill-green" style="width:100%;"></div>
+              <div class="bar-value">100</div>
+            </div>
+          </div>
+          <div class="quality-row">
+            <div class="qlabel">Rendimiento</div>
+            <div class="bar-bg">
+              <div class="bar-fill fill-green" style="width:100%;"></div>
+              <div class="bar-value">100</div>
+            </div>
+          </div>
+          <div class="quality-row">
+            <div class="qlabel">Seguridad</div>
+            <div class="bar-bg">
+              <div class="bar-fill fill-green" style="width:100%;"></div>
+              <div class="bar-value">100</div>
+            </div>
+          </div>
+          <div class="quality-row">
+            <div class="qlabel">Usabilidad</div>
+            <div class="bar-bg">
+              <div class="bar-fill fill-green" style="width:100%;"></div>
+              <div class="bar-value">100</div>
+            </div>
+          </div>
+          <div class="quality-row">
+            <div class="qlabel">Portabilidad</div>
+            <div class="bar-bg">
+              <div class="bar-fill fill-green" style="width:100%;"></div>
+              <div class="bar-value">100</div>
+            </div>
+          </div>
+          <div class="quality-row">
+            <div class="qlabel">Mantenibilidad</div>
+            <div class="bar-bg">
+              <div class="bar-fill fill-yellow" style="width:60%;"></div>
+              <div class="bar-value">60</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="color:#94a3b8; font-size:.82rem; text-align:center;">Estándar de referencia: <strong
+          style="color:#f1f5f9;">ISO/IEC 25010</strong> · Análisis estático sobre 1.13 MB a 109.75 MB/s · 0 hallazgos de
+        seguridad</p>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 12: TESTS DE CALIDAD ════════════════════════ -->
+    <div class="slide bg-gradient-3" data-slide="11">
+      <div class="glow purple"></div>
+      <div class="section-label">Verificación</div>
+      <h2>Tests de Calidad del Sistema</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>🧪 test_calidad_sistema.py</h3>
+          <p style="margin-bottom:12px; font-size:.82rem; color:#94a3b8;">Pruebas funcionales de verificación de
+            integridad</p>
+          <ul class="check-list">
+            <li>Estructura de arquitectura (3 repositorios existen)</li>
+            <li>Integridad Backend Spring Boot (pom.xml válido)</li>
+            <li>Integridad Frontend Angular (package.json válido)</li>
+            <li>Integridad Servicio SOAP CXF (pom.xml válido)</li>
+          </ul>
+          <div
+            style="margin-top:12px; padding:10px; background:rgba(52,211,153,.1); border-radius:8px; border-left: 3px solid #34d399;">
+            <p style="font-size:.82rem; color:#34d399; font-weight:600;">✅ Todas las pruebas pasaron — 39.2ms</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>📡 test_soap.py</h3>
+          <p style="margin-bottom:12px; font-size:.82rem; color:#94a3b8;">Pruebas de integración SOAP con WS-Security
+          </p>
+          <ul class="check-list">
+            <li>Genera Nonce + Created dinámicamente</li>
+            <li>Calcula PasswordDigest (SHA-1)</li>
+            <li>Envía SOAP Envelope con header Security</li>
+            <li>Consulta producto MED-001</li>
+            <li>Prueba con namespaces HTTP y HTTPS</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top: 20px; max-width: 1000px; width: 100%;">
+        <h3>📋 Tests Unitarios Frontend (27 archivos .spec.ts)</h3>
+        <p>Cada componente Angular tiene su archivo de pruebas Jasmine/Karma: app, dashboard, login, clientes,
+          consultas, mascotas, facturación, farmacia, cirugías, hospitalización, laboratorio, reportes, veterinarios,
+          registro, verificar-código, administración, etc.</p>
+      </div>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 13: HALLAZGOS SEGURIDAD ════════════════════════ -->
+    <div class="slide bg-gradient-4" data-slide="12">
+      <div class="glow blue"></div>
+      <div class="section-label">ISO 27001 / 27010</div>
+      <h2>Revisión de Seguridad — Hallazgos</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>✅ Controles Aplicados</h3>
+          <ul class="check-list">
+            <li>Credenciales movidas a variables de entorno</li>
+            <li>Conexión SQL con cifrado TLS exigido</li>
+            <li>Plantillas .env.example; .env ignorado en Git</li>
+            <li>Código de registro admin como env variable</li>
+            <li>Comparación en tiempo constante</li>
+            <li>Log SQL desactivado en perfil local</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>⚠️ Hallazgos Abiertos</h3>
+          <ul class="x-list">
+            <li class="critical">Token JWT en localStorage (riesgo XSS)</li>
+            <li class="critical">65 vulnerabilidades en deps del frontend</li>
+            <li class="high">ddl-auto=update sin migraciones versionadas</li>
+            <li class="high">OTP con ThreadLocalRandom sin límite de intentos</li>
+            <li class="high">Transferencias SOAP sin transaccionalidad</li>
+            <li class="medium">Archivos subidos sin validación de contenido</li>
+            <li class="medium">Sin tests automatizados de backend en src/test</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 14: CONCLUSIONES ════════════════════════ -->
+    <div class="slide bg-gradient-1" data-slide="13">
+      <div class="glow blue"></div>
+      <div class="glow green"></div>
+      <div class="section-label">Conclusiones</div>
+      <h2>Resumen del Proyecto</h2>
+      <div class="grid-3" style="margin-bottom: 24px;">
+        <div class="card">
+          <h3>🏗️ Arquitectura</h3>
+          <p>Ecosistema de 3 servicios desacoplados con comunicación REST (frontend) y SOAP (B2B), siguiendo
+            arquitectura por capas con organización modular.</p>
+        </div>
+        <div class="card">
+          <h3>🛡️ Seguridad</h3>
+          <p>Doble capa de protección: JWT para REST y WS-Security con PasswordDigest para SOAP. Variables de entorno
+            para credenciales. OTP por email.</p>
+        </div>
+        <div class="card">
+          <h3>📊 Calidad</h3>
+          <p>Score global de <strong style="color:#34d399;">94/100</strong> bajo ISO/IEC 25010. Complejidad media baja
+            (2.1). 27 archivos de tests detectados. 0 hallazgos de seguridad estática.</p>
+        </div>
+      </div>
+      <div class="card" style="max-width: 800px; text-align: center;">
+        <p style="font-size: 1rem; color: #f1f5f9;">VetSphere demuestra cómo una <strong>arquitectura híbrida
+            moderna</strong> puede coexistir: <span style="color:#38bdf8;">REST</span> proporciona agilidad para la UI,
+          mientras <span style="color:#a78bfa;">SOAP con WS-Security</span> garantiza transacciones seguras y auditables
+          con proveedores externos.</p>
+      </div>
+      <div class="hero-tags" style="margin-top: 24px;">
+        <span class="tag">30,062 líneas</span>
+        <span class="tag green">246 archivos</span>
+        <span class="tag purple">9 lenguajes</span>
+        <span class="tag orange">3 servicios</span>
+        <span class="tag">4 roles</span>
+        <span class="tag green">94/100 calidad</span>
+      </div>
+    </div>
+
+    <!-- ════════════════════════ SLIDE 15: GRACIAS ════════════════════════ -->
+    <div class="slide bg-gradient-6" data-slide="14">
+      <div class="glow blue"></div>
+      <div class="glow green"></div>
+      <div class="glow purple"></div>
+      <div class="section-label">Fin de la Presentación</div>
+      <div class="hero-title" style="font-size: 3.5rem;">¡Gracias!</div>
+      <div class="hero-sub" style="margin-top:12px;">Proyecto de Calidad de Software — VetSphere</div>
+      <div style="margin-top: 40px; display: flex; gap: 24px;">
+        <div class="card" style="text-align: center; min-width: 180px;">
+          <div style="font-size: .75rem; color: #94a3b8;">Frontend</div>
+          <div style="color: #38bdf8; font-weight: 600;">localhost:4200</div>
+        </div>
+        <div class="card" style="text-align: center; min-width: 180px;">
+          <div style="font-size: .75rem; color: #94a3b8;">Backend API</div>
+          <div style="color: #34d399; font-weight: 600;">localhost:8080</div>
+        </div>
+        <div class="card" style="text-align: center; min-width: 180px;">
+          <div style="font-size: .75rem; color: #94a3b8;">Mini SOAP</div>
+          <div style="color: #a78bfa; font-weight: 600;">localhost:8090</div>
+        </div>
+      </div>
+      <div class="hero-meta" style="margin-top: 40px;">
+        Navega con <span class="kbd">←</span> <span class="kbd">→</span> o los botones inferiores
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── NAVIGATION ─── -->
+  <div class="nav">
+    <button onclick="prevSlide()" title="Anterior">◀</button>
+    <div class="counter" id="counter">1 / 15</div>
+    <button onclick="nextSlide()" title="Siguiente">▶</button>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const counter = document.getElementById('counter');
+    const progress = document.getElementById('progress');
+    const total = slides.length;
+    let current = 0;
+
+    function goToSlide(n) {
+      if (n < 0 || n >= total) return;
+      slides[current].classList.remove('active');
+      current = n;
+      slides[current].classList.add('active');
+      counter.textContent = `${current + 1} / ${total}`;
+      progress.style.width = `${((current + 1) / total) * 100}%`;
+    }
+
+    function nextSlide() { goToSlide(current + 1); }
+    function prevSlide() { goToSlide(current - 1); }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+      if (e.key === 'Home') { e.preventDefault(); goToSlide(0); }
+      if (e.key === 'End') { e.preventDefault(); goToSlide(total - 1); }
+    });
+
+    // Touch support
+    let touchStartX = 0;
+    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+    document.addEventListener('touchend', e => {
+      const diff = touchStartX - e.changedTouches[0].screenX;
+      if (Math.abs(diff) > 50) { diff > 0 ? nextSlide() : prevSlide(); }
+    });
+
+    // Init progress
+    progress.style.width = `${(1 / total) * 100}%`;
+  </script>
+</body>
+
+</html>

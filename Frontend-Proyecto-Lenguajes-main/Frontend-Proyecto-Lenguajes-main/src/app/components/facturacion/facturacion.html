@@ -1,0 +1,562 @@
+<section class="facturacion-page" @fadeInUp>
+  <div class="facturacion-hero">
+    <div>
+      <p class="facturacion-eyebrow">Administración financiera</p>
+      <h1>Facturación y cobros</h1>
+      <p>Consulta ventas, controla pagos y emite comprobantes para cada atención.</p>
+    </div>
+    <button class="boton-primario" type="button" (click)="abrirNuevaFactura()">
+      <app-icono name="receipt" [size]="18"></app-icono>
+      Nueva factura
+    </button>
+  </div>
+
+  <app-cargador *ngIf="cargando"></app-cargador>
+
+  <ng-container *ngIf="!cargando">
+  <div class="facturacion-stats">
+    <article class="factura-stat factura-stat-total">
+      <span>Total facturado</span>
+      <strong>${{ total | number:'1.2-2' }}</strong>
+      <small>Historico de ventas</small>
+    </article>
+    <article class="factura-stat">
+      <span>Facturas</span>
+      <strong>{{ facturas.length }}</strong>
+      <small>Emitidas</small>
+    </article>
+    <article class="factura-stat factura-stat-pendiente">
+      <span>Pendientes</span>
+      <strong>{{ pendientes }}</strong>
+      <small>Por cobrar</small>
+    </article>
+    <article class="factura-stat factura-stat-pagada">
+      <span>Pagadas</span>
+      <strong>{{ pagadas }}</strong>
+      <small>Cerradas</small>
+    </article>
+  </div>
+
+  <div class="soft-panel" *ngIf="ultimaFactura as emitida" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+    <div>
+      <span class="page-eyebrow">Factura emitida</span>
+      <strong style="display: block; color: var(--factura-text); font-weight: 950;">{{ emitida.numero }}</strong>
+      <small style="color: var(--factura-muted);">
+        Total ${{ emitida.total | number:'1.2-2' }} · IVA (15%) ${{ impuestosDe(emitida) | number:'1.2-2' }}
+        <ng-container *ngIf="emitida.cuponCodigo"> · Cupón {{ emitida.cuponCodigo }} (-${{ descuentoDe(emitida) | number:'1.2-2' }})</ng-container>
+        · {{ emitida.estadoPago }}
+      </small>
+    </div>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <button class="boton-secundario" type="button" (click)="seleccionar(emitida)">
+        <app-icono name="eye" [size]="16"></app-icono>
+        Ver detalle
+      </button>
+      <button *ngIf="!esCliente" class="boton-primario" type="button" (click)="descargarPdf(emitida)">
+        <app-icono name="download" [size]="16"></app-icono>
+        Descargar PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="facturacion-grid">
+    <section class="facturas-panel">
+      <div class="facturas-panel-header">
+        <div>
+          <p class="facturacion-eyebrow">Comprobantes</p>
+          <h2>Listado de facturas</h2>
+        </div>
+        <span>{{ facturasFiltradas.length }} de {{ facturas.length }} facturas</span>
+      </div>
+
+      <div class="facturas-filtros" role="search" aria-label="Buscar comprobantes">
+        <label class="facturas-busqueda">
+          <span>Buscar comprobante</span>
+          <input type="search" [(ngModel)]="busquedaFactura" placeholder="N.º, cliente, mascota, concepto o estado" aria-label="Buscar por número de factura, cliente, mascota, concepto o estado">
+        </label>
+        <label>
+          <span>Estado</span>
+          <select [(ngModel)]="estadoFiltro" aria-label="Filtrar por estado">
+            <option value="">Todos</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Pagado">Pagado</option>
+            <option value="Anulado">Anulado</option>
+          </select>
+        </label>
+        <label>
+          <span>Desde</span>
+          <input type="date" [(ngModel)]="fechaDesde" aria-label="Fecha inicial">
+        </label>
+        <label>
+          <span>Hasta</span>
+          <input type="date" [(ngModel)]="fechaHasta" aria-label="Fecha final">
+        </label>
+        <button class="boton-secundario facturas-limpiar" type="button" (click)="limpiarFiltrosFacturas()">Limpiar</button>
+      </div>
+
+      <div class="facturas-table-wrap">
+        <table class="facturas-table">
+          <thead>
+            <tr>
+              <th>Factura</th>
+              <th>Cliente</th>
+              <th>Mascota</th>
+              <th>Concepto</th>
+              <th>Subtotal</th>
+              <th>Descuento</th>
+              <th>IVA (15%)</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let f of facturasFiltradas" [class.fila-seleccionada]="facturaSeleccionada?.id === f.id">
+              <td>
+                <button class="factura-numero" type="button" (click)="seleccionar(f)">
+                  {{ f.numero }}
+                </button>
+                <small>{{ f.fecha | date:'dd/MM/yyyy' }}</small>
+              </td>
+              <td>{{ f.cliente }}</td>
+              <td>{{ f.mascota }}</td>
+              <td>{{ f.concepto }}</td>
+              <td>${{ subtotalDe(f) | number:'1.2-2' }}</td>
+              <td>
+                <span *ngIf="descuentoDe(f) > 0">-${{ descuentoDe(f) | number:'1.2-2' }}</span>
+                <small *ngIf="f.cuponCodigo">Cupon: {{ f.cuponCodigo }}</small>
+              </td>
+              <td>${{ impuestosDe(f) | number:'1.2-2' }}</td>
+              <td class="factura-total">${{ f.total | number:'1.2-2' }}</td>
+              <td>
+                <span class="badge" [ngClass]="estadoClase(f)">{{ f.estadoPago }}</span>
+                <small *ngIf="f.metodoPago">{{ f.metodoPago }}</small>
+              </td>
+              <td>
+                <div class="acciones-factura">
+                  <button class="accion-boton" type="button" title="Ver comprobante" (click)="seleccionar(f)">
+                    <app-icono name="eye" [size]="16"></app-icono>
+                  </button>
+                  <button *ngIf="!esCliente" class="accion-boton accion-descargar" type="button" title="Descargar PDF" (click)="descargarPdf(f)">
+                    <app-icono name="file" [size]="16"></app-icono>
+                  </button>
+                  <button class="accion-boton" type="button" title="Editar pago" (click)="abrirPago(f)">
+                    <app-icono name="receipt" [size]="16"></app-icono>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="facturasFiltradas.length === 0">
+              <td colspan="10">{{ facturas.length ? 'No hay comprobantes que coincidan con la búsqueda o los filtros.' : 'Todavia no hay facturas registradas.' }}</td>
+            </tr>
+          </tbody>
+          <tfoot *ngIf="facturasFiltradas.length > 0">
+            <tr class="facturas-tfoot">
+              <td colspan="4">Totales de {{ facturasFiltradas.length }} comprobantes</td>
+              <td>${{ subtotalFiltrado | number:'1.2-2' }}</td>
+              <td>-${{ descuentoFiltrado | number:'1.2-2' }}</td>
+              <td>${{ impuestosFiltrado | number:'1.2-2' }}</td>
+              <td class="factura-total">${{ totalFiltrado | number:'1.2-2' }}</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <aside class="resumen-panel">
+      <p class="facturacion-eyebrow">Vista rapida</p>
+      <h2>{{ facturaSeleccionada ? 'Comprobante seleccionado' : 'Selecciona una factura' }}</h2>
+      <p class="resumen-texto" *ngIf="!facturaSeleccionada">
+        Usa el icono de vista para revisar el comprobante antes de imprimirlo o descargarlo.
+      </p>
+
+      <div class="mini-comprobante" *ngIf="facturaSeleccionada as factura">
+        <div class="mini-comprobante-top">
+          <span>VS</span>
+          <div>
+            <strong>{{ factura.numero }}</strong>
+            <small>{{ factura.estadoPago }}</small>
+          </div>
+        </div>
+        <dl>
+          <div><dt>Cliente</dt><dd>{{ factura.cliente }}</dd></div>
+          <div><dt>Mascota</dt><dd>{{ factura.mascota }}</dd></div>
+          <div><dt>Concepto</dt><dd>{{ factura.concepto }}</dd></div>
+          <div *ngIf="factura.metodoPago"><dt>Método</dt><dd>{{ factura.metodoPago }}</dd></div>
+          <div><dt>Subtotal</dt><dd>${{ subtotalDe(factura) | number:'1.2-2' }}</dd></div>
+          <div *ngIf="descuentoDe(factura) > 0"><dt>Descuento</dt><dd>-${{ descuentoDe(factura) | number:'1.2-2' }}</dd></div>
+          <div *ngIf="factura.cuponCodigo"><dt>Cupón</dt><dd>{{ factura.cuponCodigo }}</dd></div>
+          <div><dt>IVA (15%)</dt><dd>${{ impuestosDe(factura) | number:'1.2-2' }}</dd></div>
+          <div><dt>Total</dt><dd>${{ factura.total | number:'1.2-2' }}</dd></div>
+        </dl>
+        <div class="mini-actions">
+          <button class="boton-secundario" type="button" (click)="abrirPago(factura)">
+            <app-icono name="receipt" [size]="16"></app-icono>
+            Editar pago
+          </button>
+          <button class="boton-secundario" type="button" (click)="imprimirComprobante(factura)">
+            <app-icono name="printer" [size]="16"></app-icono>
+            Imprimir
+          </button>
+          <button *ngIf="!esCliente" class="boton-primario" type="button" (click)="descargarPdf(factura)">
+            <app-icono name="download" [size]="16"></app-icono>
+            Descargar PDF
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+  </ng-container>
+
+  <div class="modal-comprobante" *ngIf="facturaSeleccionada as factura" (click)="cerrarVistaPrevia()">
+    <section class="comprobante-card" (click)="$event.stopPropagation()">
+      <header class="comprobante-header">
+        <div class="comprobante-brand">
+          <span>VS</span>
+          <div>
+            <h2>VetSphere</h2>
+            <p>Clinica veterinaria integral</p>
+          </div>
+        </div>
+        <button class="boton-icono" type="button" aria-label="Cerrar comprobante" (click)="cerrarVistaPrevia()">
+          <app-icono name="x" [size]="18"></app-icono>
+        </button>
+      </header>
+
+      <div class="comprobante-body">
+        <div class="comprobante-title">
+          <div>
+            <p>Comprobante de pago</p>
+            <h3>{{ factura.numero }}</h3>
+          </div>
+          <span [ngClass]="factura.estadoPago === 'Pagado' ? 'estado-pagado' : (factura.estadoPago === 'Anulado' ? 'estado-anulado' : 'estado-pendiente')">{{ factura.estadoPago }}</span>
+        </div>
+
+        <div class="comprobante-info">
+          <article><span>Cliente</span><strong>{{ factura.cliente }}</strong></article>
+          <article><span>Fecha</span><strong>{{ factura.fecha | date:'dd/MM/yyyy' }}</strong></article>
+          <article><span>Mascota</span><strong>{{ factura.mascota }}</strong></article>
+          <article><span>Atencion</span><strong>{{ factura.concepto }}</strong></article>
+          <article *ngIf="factura.metodoPago"><span>Método</span><strong>{{ factura.metodoPago }}</strong></article>
+          <article *ngIf="factura.cuponCodigo"><span>Cupón</span><strong>{{ factura.cuponCodigo }}</strong></article>
+        </div>
+
+        <div class="comprobante-linea">
+          <span>Subtotal</span>
+          <strong>${{ subtotalDe(factura) | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="comprobante-linea" *ngIf="descuentoDe(factura) > 0">
+          <span>Descuento {{ factura.cuponCodigo ? '(' + factura.cuponCodigo + ')' : '' }}</span>
+          <strong>-${{ descuentoDe(factura) | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="comprobante-linea">
+          <span>IVA (15%)</span>
+          <strong>${{ impuestosDe(factura) | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="comprobante-total">
+          <span>Total</span>
+          <strong>${{ factura.total | number:'1.2-2' }}</strong>
+        </div>
+
+        <section *ngIf="factura.estadoPago === 'Pendiente'" class="mt-5 rounded-2xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-black uppercase tracking-wide text-cyan-800 dark:text-cyan-300">Pago por transferencia</p>
+              <h4 class="mt-1 text-lg font-black text-slate-950 dark:text-white">Banco Pichincha · Ahorros</h4>
+              <ng-container *ngIf="datosTransferencia?.configurado; else pagoSinConfigurar">
+                <dl class="mt-3 grid gap-1 text-sm text-slate-700 dark:text-slate-200">
+                  <div><dt class="inline font-bold">Cuenta: </dt><dd class="inline">{{ datosTransferencia.numeroCuenta }}</dd></div>
+                  <div><dt class="inline font-bold">Titular: </dt><dd class="inline">{{ datosTransferencia.titular }}</dd></div>
+                  <div><dt class="inline font-bold">Cédula/RUC: </dt><dd class="inline">{{ datosTransferencia.identificacion }}</dd></div>
+                  <div><dt class="inline font-bold">Referencia: </dt><dd class="inline">{{ factura.numero }}</dd></div>
+                </dl>
+              </ng-container>
+              <ng-template #pagoSinConfigurar><p class="mt-2 text-sm text-amber-800 dark:text-amber-200">La cuenta de transferencia aún no está configurada en el servidor.</p></ng-template>
+            </div>
+            <img *ngIf="qrPagoUrl" [src]="qrPagoUrl" [alt]="'QR informativo para la factura ' + factura.numero" class="h-36 w-36 rounded-xl bg-white p-2 shadow-sm">
+          </div>
+          <p *ngIf="datosTransferencia?.configurado" class="mt-3 text-xs leading-5 text-slate-600 dark:text-slate-300">El QR muestra los datos y el monto de esta factura para facilitar la transferencia. No procesa el pago; la clínica confirma el pago al verificar el comprobante.</p>
+        </section>
+      </div>
+
+      <footer class="comprobante-footer">
+        <p>Gracias por confiar en VetSphere. Este comprobante respalda el servicio registrado en el historial clinico.</p>
+        <div>
+          <button class="boton-secundario" type="button" (click)="imprimirComprobante(factura)">
+            <app-icono name="printer" [size]="16"></app-icono>
+            Imprimir
+          </button>
+          <button *ngIf="!esCliente" class="boton-primario" type="button" (click)="descargarPdf(factura)">
+            <app-icono name="download" [size]="16"></app-icono>
+            Descargar PDF
+          </button>
+          <button class="boton-secundario" type="button" (click)="descargarComprobante(factura)">
+            <app-icono name="file" [size]="16"></app-icono>
+            Descargar comprobante
+          </button>
+        </div>
+      </footer>
+    </section>
+  </div>
+
+  <div class="modal-comprobante" *ngIf="facturaPago as factura" (click)="cerrarPago()">
+    <section class="comprobante-card pago-card" (click)="$event.stopPropagation()">
+      <header class="comprobante-header">
+        <div class="comprobante-brand">
+          <span>VS</span>
+          <div>
+            <h2>Editar pago</h2>
+            <p>{{ factura.numero }} - {{ factura.cliente }}</p>
+          </div>
+        </div>
+        <button class="boton-icono" type="button" (click)="cerrarPago()"><app-icono name="x" [size]="18"></app-icono></button>
+      </header>
+      <div class="comprobante-body">
+        <label class="grid gap-2" style="display: grid; gap: 0.5rem; margin-bottom: 1rem;" for="facturacion-estadoPago">
+          <span class="form-label">Estado de pago</span>
+          <select id="facturacion-estadoPago" class="campo" [(ngModel)]="estadoPago" name="estadoPago">
+            <option>Pagado</option>
+            <option>Pendiente</option>
+            <option>Anulado</option>
+          </select>
+        </label>
+        <label *ngIf="estadoPago === 'Pagado'" class="grid gap-2" style="display: grid; gap: 0.5rem; margin-bottom: 1rem;" for="facturacion-metodoPago">
+          <span class="form-label">Método de pago</span>
+          <select id="facturacion-metodoPago" class="campo" [(ngModel)]="metodoPago" name="metodoPago">
+            <option value="Efectivo">Efectivo</option>
+            <option value="Tarjeta">Tarjeta</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Transferencia Banco Pichincha">Transferencia Banco Pichincha</option>
+          </select>
+        </label>
+        <div class="comprobante-total">
+          <span>Total factura</span>
+          <strong>${{ factura.total | number:'1.2-2' }}</strong>
+        </div>
+        <button class="boton-primario w-full" type="button" (click)="guardarPago()">Guardar estado</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal Nueva Factura -->
+  <div class="modal-comprobante" *ngIf="mostrarFormFactura" (click)="cerrarNuevaFactura()">
+    <section class="comprobante-card nueva-factura-card" (click)="$event.stopPropagation()">
+      <header class="comprobante-header">
+        <div class="comprobante-brand">
+          <span>VS</span>
+          <div>
+            <h2>Emitir nueva factura</h2>
+            <p>Elige facturación directa o automática de servicios</p>
+          </div>
+        </div>
+        <button class="boton-icono" type="button" aria-label="Cerrar" (click)="cerrarNuevaFactura()">
+          <app-icono name="x" [size]="18"></app-icono>
+        </button>
+      </header>
+
+      <div class="comprobante-body" style="max-height: 70vh; overflow-y: auto; padding: 1.5rem;">
+        <!-- Toggles / Tabs -->
+        <div class="tab-buttons">
+          <button [class.activo]="tipoFacturacion === 'automatica'" type="button" (click)="cambiarTipoFacturacion('automatica')">
+            Automática (Servicios)
+          </button>
+          <button [class.activo]="tipoFacturacion === 'directa'" type="button" (click)="cambiarTipoFacturacion('directa')">
+            Directa (Productos y conceptos)
+          </button>
+        </div>
+
+        <form (ngSubmit)="guardarNuevaFactura()" class="grid gap-4" style="display: grid; gap: 1rem;">
+          <!-- Common Fields -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <label class="grid gap-2" style="display: grid; gap: 0.5rem;" for="facturacion-numero">
+              <span class="form-label">Número de factura</span>
+              <input id="facturacion-numero" class="campo" type="text" [value]="numeroPendiente" readonly>
+            </label>
+            <label class="grid gap-2" style="display: grid; gap: 0.5rem;" for="facturacion-fecha">
+              <span class="form-label">Fecha de emisión</span>
+              <input id="facturacion-fecha" class="campo" type="datetime-local" name="fecha" [(ngModel)]="nuevaFactura.fecha" required>
+            </label>
+          </div>
+
+          <!-- AUTOMATICA MODE -->
+          <div *ngIf="tipoFacturacion === 'automatica'" style="display: grid; gap: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <label class="grid gap-2" style="display: grid; gap: 0.5rem;">
+                <span class="form-label">Cliente (Propietario)</span>
+                <select class="campo" name="clienteId" [(ngModel)]="nuevaFactura.clienteId" (change)="onClienteChange()" required>
+                  <option [ngValue]="null">Seleccionar cliente</option>
+                  <option *ngFor="let c of clientes" [ngValue]="c.id">{{ c.nombres }} {{ c.apellidos }}</option>
+                </select>
+              </label>
+              <label class="grid gap-2" style="display: grid; gap: 0.5rem;">
+                <span class="form-label">Mascota</span>
+                <select class="campo" name="mascotaId" [(ngModel)]="nuevaFactura.mascotaId" (change)="onMascotaChange()" required [disabled]="!nuevaFactura.clienteId">
+                  <option [ngValue]="null">Seleccionar mascota</option>
+                  <option *ngFor="let m of mascotasFiltradas" [ngValue]="m.id">{{ m.nombre }} ({{ m.especie }})</option>
+                </select>
+              </label>
+            </div>
+
+            <!-- Pending Items List -->
+            <div *ngIf="nuevaFactura.mascotaId" style="border: 1px solid var(--factura-border); border-radius: 0.75rem; padding: 1rem; background: var(--factura-bg);">
+              <span class="form-label" style="margin-bottom: 0.75rem; display: block; font-weight: 900; color: var(--factura-primary);">Servicios clínicos pendientes</span>
+
+              <div style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto;">
+                <div *ngFor="let item of serviciosPaciente" class="servicio-item">
+                  <input type="checkbox" [id]="'srv-' + item.tipo + '-' + item.id" [name]="'srv-' + item.tipo + '-' + item.id" [(ngModel)]="item.seleccionado" (change)="actualizarConceptoServicios()">
+                  <label [for]="'srv-' + item.tipo + '-' + item.id" style="flex: 1; font-size: 0.85rem; cursor: pointer; display: flex; flex-direction: column;">
+                    <strong style="color: var(--factura-text);">{{ item.tipo }}</strong>
+                    <span style="color: var(--factura-muted);">{{ item.descripcion }}</span>
+                    <small style="color: var(--factura-muted); font-size: 0.75rem;">{{ item.fecha | date:'dd/MM/yyyy HH:mm' }}</small>
+                  </label>
+                  <span style="font-weight: 950; color: var(--factura-success); font-size: 0.95rem;">${{ item.precio | number:'1.2-2' }}</span>
+                </div>
+                <div *ngIf="serviciosPaciente.length === 0" style="text-align: center; padding: 1.5rem 0; color: var(--factura-muted); font-size: 0.85rem;">
+                  No hay consultas, cirugías, exámenes de laboratorio ni hospitalizaciones registrados para esta mascota.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DIRECTA MODE -->
+          <div *ngIf="tipoFacturacion === 'directa'" style="display: grid; gap: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <label class="grid gap-2" style="display: grid; gap: 0.5rem;">
+                <span class="form-label">Cliente (Propietario)</span>
+                <select class="campo" name="clienteIdDirecto" [(ngModel)]="nuevaFactura.clienteId" required>
+                  <option [ngValue]="null">Seleccionar cliente</option>
+                  <option *ngFor="let c of clientes" [ngValue]="c.id">{{ c.nombres }} {{ c.apellidos }}</option>
+                </select>
+              </label>
+              <label class="grid gap-2" style="display: grid; gap: 0.5rem;">
+                <span class="form-label">Mascota</span>
+                <select class="campo" name="mascotaIdDirecto" [(ngModel)]="nuevaFactura.mascotaId" required [disabled]="!nuevaFactura.clienteId">
+                  <option [ngValue]="null">Seleccionar mascota</option>
+                  <option *ngFor="let m of mascotas" [ngValue]="m.id">{{ m.nombre }} ({{ m.especie }})</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="soft-panel" style="display: grid; gap: 0.6rem;">
+              <span class="form-label">Producto de farmacia</span>
+              <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 0.6rem; align-items: end;">
+                <select class="campo" name="productoCatalogo" [(ngModel)]="productoCatalogo">
+                  <option value="">Seleccionar producto del catálogo</option>
+                  <option *ngFor="let p of productosVendibles" [value]="p.codigo">{{ p.nombre }} ({{ p.codigo }}) - ${{ p.precio | number:'1.2-2' }} - stock {{ p.stock }}</option>
+                </select>
+                <input class="campo" type="number" name="cantidadCatalogo" [(ngModel)]="cantidadCatalogo" min="1" step="1">
+                <button class="boton-secundario" type="button" (click)="agregarProducto()">
+                  <app-icono name="plus" [size]="16"></app-icono>
+                  Agregar
+                </button>
+              </div>
+              <small style="color: var(--factura-muted); font-size: 0.75rem;">El precio y el stock los valida el servidor contra el catálogo.</small>
+            </div>
+
+            <div class="soft-panel" style="display: grid; gap: 0.6rem;">
+              <span class="form-label">Otro concepto</span>
+              <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.6rem; align-items: end;">
+                <input class="campo" type="text" name="conceptoLibre" [(ngModel)]="conceptoLibre" placeholder="Ej. Consulta adicional" maxlength="300">
+                <input class="campo" type="number" name="cantidadLibre" [(ngModel)]="cantidadLibre" min="1" step="1">
+                <input class="campo" type="number" name="precioLibre" [(ngModel)]="precioLibre" min="0" step="0.01" placeholder="Precio unitario">
+                <button class="boton-secundario" type="button" (click)="agregarConceptoLibre()">
+                  <app-icono name="plus" [size]="16"></app-icono>
+                  Agregar
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="lineas.length > 0" style="display: grid; gap: 0.5rem;">
+              <span class="form-label">Líneas de la factura</span>
+              <div *ngFor="let linea of lineas" class="servicio-item">
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                  <strong style="color: var(--factura-text);">{{ linea.descripcion }}</strong>
+                  <small style="color: var(--factura-muted); font-size: 0.75rem;">
+                    <ng-container *ngIf="linea.productoCodigo">Catálogo: {{ linea.productoCodigo }}</ng-container>
+                    <ng-container *ngIf="!linea.productoCodigo">{{ linea.categoria || 'Concepto' }}</ng-container>
+                  </small>
+                </div>
+                <span style="font-weight: 900; color: var(--factura-muted); font-size: 0.85rem;">{{ linea.cantidad }} x ${{ linea.precioUnitario | number:'1.2-2' }}</span>
+                <strong style="font-weight: 950; color: var(--factura-success); font-size: 0.95rem;">${{ (linea.cantidad * linea.precioUnitario) | number:'1.2-2' }}</strong>
+                <button class="accion-boton" type="button" title="Quitar línea" (click)="quitarLinea(linea)">
+                  <app-icono name="trash" [size]="16"></app-icono>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Concepto -->
+          <label class="grid gap-2" style="display: grid; gap: 0.5rem;" for="facturacion-concepto">
+            <span class="form-label">Concepto de facturación</span>
+            <input id="facturacion-concepto" class="campo" type="text" name="concepto" [(ngModel)]="nuevaFactura.concepto" required maxlength="500" placeholder="Ej. Consulta, medicamentos, alimento">
+          </label>
+
+          <!-- Estado de pago -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <label class="grid gap-2" style="display: grid; gap: 0.5rem;" for="facturacion-estadoPagoNuevo">
+              <span class="form-label">Estado de pago</span>
+              <select id="facturacion-estadoPagoNuevo" class="campo" name="estadoPagoNuevo" [(ngModel)]="nuevaFactura.estadoPago" required>
+                <option>Pendiente</option>
+                <option>Pagado</option>
+                <option>Anulado</option>
+              </select>
+            </label>
+            <label *ngIf="nuevaFactura.estadoPago === 'Pagado'" class="grid gap-2" style="display: grid; gap: 0.5rem;" for="facturacion-metodoPagoNuevo">
+              <span class="form-label">Método de pago</span>
+              <select id="facturacion-metodoPagoNuevo" class="campo" name="metodoPagoNuevo" [(ngModel)]="nuevaFactura.metodoPago" required>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Tarjeta">Tarjeta</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Transferencia Banco Pichincha">Transferencia Banco Pichincha</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Cupon de descuento -->
+          <div class="soft-panel" style="display: grid; gap: 0.6rem;">
+            <span class="form-label">Cupón de descuento</span>
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; align-items: end;">
+              <input id="facturacion-cupon" class="campo" type="text" name="cuponCodigo" [(ngModel)]="nuevaFactura.cuponCodigo" (input)="limpiarCupon()" maxlength="32" placeholder="Código del cupón (ej. PROMO10)">
+              <button class="boton-secundario" type="button" (click)="aplicarCupon()" [disabled]="simulando">
+                <app-icono name="percent" [size]="16"></app-icono>
+                {{ simulando ? 'Validando...' : 'Aplicar cupón' }}
+              </button>
+            </div>
+            <p *ngIf="errorCupon" class="mensaje-error" style="margin: 0; color: #be123c; font-size: 0.78rem; font-weight: 800;">{{ errorCupon }}</p>
+            <div *ngIf="simulacion?.aplicado" class="simulacion-cupon" style="border: 1px dashed var(--factura-border); border-radius: 0.75rem; padding: 0.75rem; background: var(--factura-bg);">
+              <strong style="display: block; color: var(--factura-success); font-size: 0.85rem;">Cupón {{ simulacion?.codigo }} aplicado: -${{ simulacion?.descuento | number:'1.2-2' }}</strong>
+              <small style="display: block; color: var(--factura-muted); font-size: 0.75rem; margin-top: 0.2rem;">
+                Simulación del servidor: subtotal ${{ simulacion?.subtotal | number:'1.2-2' }} · IVA (15%) ${{ simulacion?.impuestos | number:'1.2-2' }} · total ${{ simulacion?.total | number:'1.2-2' }}
+              </small>
+            </div>
+          </div>
+
+          <!-- Total Calculation Display -->
+          <div class="comprobante-total" style="margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.25rem;">
+            <div>
+              <span style="color: #bae6fd; font-size: 0.8rem; text-transform: uppercase; display: block; font-weight: bold;">Subtotal estimado: ${{ subtotalEstimado | number:'1.2-2' }}</span>
+              <span *ngIf="simulacion?.aplicado" style="color: #cbd5e1; font-size: 0.75rem; display: block; margin-top: 0.2rem;">Descuento cupón {{ simulacion?.codigo }}: -${{ simulacion?.descuento | number:'1.2-2' }}</span>
+              <span *ngIf="simulacion?.aplicado" style="color: #cbd5e1; font-size: 0.75rem; display: block; margin-top: 0.2rem;">IVA (15%) simulado: ${{ simulacion?.impuestos | number:'1.2-2' }}</span>
+              <span *ngIf="!simulacion?.aplicado" style="color: #cbd5e1; font-size: 0.75rem; display: block; margin-top: 0.2rem;">El subtotal, el IVA (15%), el descuento y el total definitivos los calcula el servidor al emitir.</span>
+            </div>
+            <div style="text-align: right;">
+              <span style="color: #bae6fd; font-size: 0.75rem; text-transform: uppercase; display: block; font-weight: 800;">Total Facturado</span>
+              <strong *ngIf="simulacion?.aplicado; else totalSinSimular" style="font-size: 1.75rem; font-weight: 950;">${{ simulacion?.total | number:'1.2-2' }}</strong>
+              <ng-template #totalSinSimular>
+                <strong style="font-size: 1.35rem; font-weight: 950;">A confirmar</strong>
+              </ng-template>
+            </div>
+          </div>
+
+          <button class="boton-primario w-full font-black" type="submit" [disabled]="emitiendo" style="padding: 1rem; font-size: 1rem;">
+            {{ emitiendo ? 'Emitiendo...' : 'Emitir Factura' }}
+          </button>
+        </form>
+      </div>
+    </section>
+  </div>
+</section>

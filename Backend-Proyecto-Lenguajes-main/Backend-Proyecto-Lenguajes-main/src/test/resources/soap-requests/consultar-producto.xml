@@ -1,0 +1,25 @@
+<!-- Ejemplo de peticion SOAP: consultarProducto.
+     Namespace del envelope SOAP 1.1 correcto: http://schemas.xmlsoap.org/soap/envelope/
+     El endpoint exige un UsernameToken (PasswordDigest) en el header wsse:Security:
+     reemplaza USUARIO/CONTRASENA por los valores de SOAP_USERNAME y SOAP_PASSWORD,
+     y Nonce/Created por valores validos de la peticion real. -->
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:prod="https://soap.vetsphere.com/productos"
+                  xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                  xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+    <soapenv:Header>
+        <wsse:Security soapenv:mustUnderstand="1">
+            <wsse:UsernameToken wsu:Id="Token-VetSphere">
+                <wsse:Username>USUARIO</wsse:Username>
+                <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">CONTRASENA</wsse:Password>
+                <wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">NONCE_BASE64</wsse:Nonce>
+                <wsu:Created>2026-01-01T00:00:00Z</wsu:Created>
+            </wsse:UsernameToken>
+        </wsse:Security>
+    </soapenv:Header>
+    <soapenv:Body>
+        <prod:consultarProducto>
+            <codigo>MED-001</codigo>
+        </prod:consultarProducto>
+    </soapenv:Body>
+</soapenv:Envelope>

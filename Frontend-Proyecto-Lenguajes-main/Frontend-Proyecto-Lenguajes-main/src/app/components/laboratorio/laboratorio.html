@@ -1,0 +1,135 @@
+    <section class="page-shell" @fadeInUp>
+      <div class="page-header">
+        <div>
+          <p class="page-eyebrow">Diagnostico clinico</p>
+          <h1 class="page-title">Laboratorio</h1>
+          <p class="page-subtitle">Ordenes, resultados, archivos, estado de procesamiento y trazabilidad por paciente.</p>
+        </div>
+        <button class="boton-primario" type="button" (click)="nueva()">
+          <app-icono name="lab" [size]="18"></app-icono>
+          Nueva orden
+        </button>
+      </div>
+
+      <app-cargador *ngIf="cargando"></app-cargador>
+
+      <ng-container *ngIf="!cargando">
+      <div class="grid gap-4 md:grid-cols-4">
+        <article class="stat-card"><p class="stat-label">Ordenes</p><p class="stat-value">{{ ordenes.length }}</p><p class="stat-note">Registradas</p></article>
+        <article class="stat-card"><p class="stat-label">Pendientes</p><p class="stat-value">{{ contar('Pendiente') }}</p><p class="stat-note">Por procesar</p></article>
+        <article class="stat-card"><p class="stat-label">Procesando</p><p class="stat-value">{{ contar('Procesando') }}</p><p class="stat-note">En laboratorio</p></article>
+        <article class="stat-card"><p class="stat-label">Entregadas</p><p class="stat-value">{{ contar('Entregado') }}</p><p class="stat-note">Con resultado</p></article>
+      </div>
+
+      <div class="panel p-4">
+        <label class="sr-only" for="laboratorio-busqueda">Buscar ordenes de laboratorio</label>
+        <input id="laboratorio-busqueda" class="campo w-full" placeholder="Buscar por mascota, prueba, estado o resultado..." [(ngModel)]="busqueda">
+      </div>
+
+      <div class="grid gap-4 xl:grid-cols-2">
+        <article class="panel p-5" *ngFor="let orden of filtradas">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <span class="badge" [ngClass]="badgeEstado(orden.estado)">{{ orden.estado || 'Pendiente' }}</span>
+              <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 dark:bg-slate-900/60 dark:text-slate-300" 
+                    *ngIf="!orden.facturaId">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                Sin Facturar
+              </span>
+              <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300" 
+                    *ngIf="orden.facturaId && obtenerEstadoPago(orden.facturaId) === 'Pagado'">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                Pagado
+              </span>
+              <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                    *ngIf="orden.facturaId && obtenerEstadoPago(orden.facturaId) === 'Pendiente'">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                Pendiente
+              </span>
+              <h2 class="mt-3 text-xl font-black text-slate-950 dark:text-white">{{ orden.tipoPrueba }} - <strong class="text-cyan-600 dark:text-cyan-400">${{ (orden.precio || 35) | number:'1.2-2' }}</strong></h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ orden.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+              <p class="mt-3 text-sm text-slate-700 dark:text-slate-300">{{ orden.mascota?.nombre || 'Sin mascota' }} - {{ nombreUsuario(orden.veterinarioSolicitante) }}</p>
+            </div>
+            <div class="flex gap-2">
+              <button class="boton-secundario text-amber-600 border-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-400 dark:hover:bg-amber-950/30" 
+                      type="button" 
+                      *ngIf="orden.facturaId && obtenerEstadoPago(orden.facturaId) === 'Pendiente'"
+                      (click)="pagarFactura(orden.facturaId)">
+                Pagar
+              </button>
+              <button class="boton-secundario" type="button" (click)="editar(orden)">Editar</button>
+              <button class="boton-secundario" type="button" (click)="eliminar(orden)">Eliminar</button>
+            </div>
+          </div>
+          <div class="soft-panel mt-4">
+            <p class="form-label">Resultado</p>
+            <p class="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">{{ orden.resultado || 'Resultado pendiente.' }}</p>
+          </div>
+          <a class="action-link mt-4 inline-flex" *ngIf="orden.archivoResultadoUrl" [href]="orden.archivoResultadoUrl" target="_blank">Abrir archivo</a>
+        </article>
+      </div>
+      </ng-container>
+
+      <div class="fixed inset-0 z-50 bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+           *ngIf="formularioAbierto"
+           (click)="cerrar()">
+        <aside class="panel h-full w-full max-w-xl overflow-y-auto p-5 shadow-2xl sm:p-6" (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">{{ editandoId ? 'Editar orden' : 'Nueva orden' }}</p>
+              <h2 class="section-title">Formulario de laboratorio</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Actualiza resultado y estado sin perder el vinculo con el paciente.</p>
+            </div>
+            <button class="boton-icono" type="button" (click)="cerrar()" aria-label="Cerrar formulario"><app-icono name="x" [size]="18"></app-icono></button>
+          </div>
+
+          <form class="mt-5 grid gap-4" (ngSubmit)="guardar()">
+            <div class="grid gap-4 sm:grid-cols-2" *ngIf="!editandoId">
+              <label class="grid gap-2" for="laboratorio-mascotaId">
+                <span class="form-label">Mascota</span>
+                <select id="laboratorio-mascotaId" class="campo" name="mascotaId" [(ngModel)]="form.mascotaId" required>
+                  <option [ngValue]="null">Seleccionar mascota</option>
+                  <option *ngFor="let mascota of mascotas" [ngValue]="mascota.id">{{ mascota.nombre }} - {{ mascota.propietario?.nombres }}</option>
+                </select>
+              </label>
+              <label class="grid gap-2" for="laboratorio-veterinarioId">
+                <span class="form-label">Veterinario solicitante</span>
+                <select id="laboratorio-veterinarioId" class="campo" name="veterinarioId" [(ngModel)]="form.veterinarioId" required>
+                  <option [ngValue]="null">Seleccionar veterinario</option>
+                  <option *ngFor="let vet of veterinarios" [ngValue]="vet.id">{{ vet.nombres }} {{ vet.apellidos }}</option>
+                </select>
+              </label>
+            </div>
+            <label class="grid gap-2" for="laboratorio-tipoPrueba">
+              <span class="form-label">Tipo de prueba</span>
+              <input id="laboratorio-tipoPrueba" class="campo" name="tipoPrueba" [(ngModel)]="form.tipoPrueba" required>
+            </label>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="laboratorio-estado">
+                <span class="form-label">Estado</span>
+                <select id="laboratorio-estado" class="campo" name="estado" [(ngModel)]="form.estado">
+                  <option>Pendiente</option>
+                  <option>Procesando</option>
+                  <option>Entregado</option>
+                  <option>Repetir muestra</option>
+                </select>
+              </label>
+              <label class="grid gap-2" for="laboratorio-precio">
+                <span class="form-label">Precio ($)</span>
+                <input id="laboratorio-precio" class="campo" type="number" name="precio" [(ngModel)]="form.precio" min="0" step="0.01" required>
+              </label>
+            </div>
+            <label class="grid gap-2" for="laboratorio-resultado">
+              <span class="form-label">Resultado</span>
+              <textarea id="laboratorio-resultado" class="campo min-h-32" name="resultado" [(ngModel)]="form.resultado"></textarea>
+            </label>
+            <label class="grid gap-2" for="laboratorio-archivoResultadoUrl">
+              <span class="form-label">URL archivo resultado</span>
+              <input id="laboratorio-archivoResultadoUrl" class="campo" name="archivoResultadoUrl" [(ngModel)]="form.archivoResultadoUrl">
+            </label>
+            <button class="boton-primario w-full" type="submit">{{ editandoId ? 'Guardar cambios' : 'Crear orden' }}</button>
+            <p class="text-sm font-bold text-emerald-700 dark:text-emerald-300" *ngIf="mensaje">{{ mensaje }}</p>
+          </form>
+        </aside>
+      </div>
+    </section>

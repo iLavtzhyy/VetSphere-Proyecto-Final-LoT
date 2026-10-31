@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/app/components/mascotas/mascotas.spec.ts",
+    "src/app/components/clientes/clientes.spec.ts",
+    "src/app/components/veterinarios/veterinarios.spec.ts",
+    "src/app/components/agendar-cita/agendar-cita.spec.ts",
+    "src/**/*.d.ts"
+  ]
+}

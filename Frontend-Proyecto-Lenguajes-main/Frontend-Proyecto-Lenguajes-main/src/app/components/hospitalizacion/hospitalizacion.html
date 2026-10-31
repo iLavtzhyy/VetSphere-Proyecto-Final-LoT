@@ -1,0 +1,182 @@
+    <section class="page-shell" @fadeInUp>
+      <div class="page-header">
+        <div>
+          <p class="page-eyebrow">Area clinica</p>
+          <h1 class="page-title">Hospitalizacion</h1>
+          <p class="page-subtitle">Pacientes internados, jaulas, plan de cuidados, alta medica y responsable clinico.</p>
+        </div>
+        <button class="boton-primario" type="button" (click)="nuevoIngreso()">
+          <app-icono name="shield" [size]="18"></app-icono>
+          Nuevo ingreso
+        </button>
+      </div>
+
+      <app-cargador *ngIf="cargando"></app-cargador>
+
+      <ng-container *ngIf="!cargando">
+      <div class="grid gap-4 md:grid-cols-4">
+        <article class="stat-card"><p class="stat-label">Ingresos</p><p class="stat-value">{{ hospitalizaciones.length }}</p><p class="stat-note">Total</p></article>
+        <article class="stat-card"><p class="stat-label">Internados</p><p class="stat-value">{{ contar('Internado') }}</p><p class="stat-note">Activos</p></article>
+        <article class="stat-card"><p class="stat-label">Observacion</p><p class="stat-value">{{ contar('Observacion') }}</p><p class="stat-note">Monitoreo</p></article>
+        <article class="stat-card"><p class="stat-label">Altas</p><p class="stat-value">{{ contar('Alta') }}</p><p class="stat-note">Cerradas</p></article>
+      </div>
+
+      <div class="panel p-4">
+        <label class="sr-only" for="hospitalizacion-busqueda">Buscar hospitalizaciones</label>
+        <input id="hospitalizacion-busqueda" class="campo w-full" placeholder="Buscar por mascota, jaula, motivo, estado..." [(ngModel)]="busqueda">
+      </div>
+
+      <div class="grid gap-4 xl:grid-cols-2">
+        <article class="panel p-5" *ngFor="let h of filtradas">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <span class="badge" [ngClass]="badgeEstado(h.estado)">{{ h.estado || 'Internado' }}</span>
+              <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 dark:bg-slate-900/60 dark:text-slate-300" 
+                    *ngIf="!h.facturaId">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                Sin Facturar
+              </span>
+              <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300" 
+                    *ngIf="h.facturaId && obtenerEstadoPago(h.facturaId) === 'Pagado'">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                Pagado
+              </span>
+              <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                    *ngIf="h.facturaId && obtenerEstadoPago(h.facturaId) === 'Pendiente'">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                Pendiente
+              </span>
+              <h2 class="mt-3 text-xl font-black text-slate-950 dark:text-white">{{ h.mascota?.nombre || 'Paciente sin asignar' }} - <strong class="text-cyan-600 dark:text-cyan-400">\$ {{ (h.precio || 45) | number:'1.2-2' }}</strong></h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Ingreso: {{ h.ingreso | date:'dd/MM/yyyy HH:mm' }} - Jaula {{ h.jaula }}</p>
+              <p class="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">{{ h.motivo }}</p>
+            </div>
+            <div class="flex gap-2">
+              <button class="boton-primario" type="button" *ngIf="esEstanciaActiva(h)" (click)="abrirCuenta(h)">Cuenta y consumos</button>
+              <button class="boton-secundario text-amber-600 border-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-400 dark:hover:bg-amber-950/30" 
+                      type="button" 
+                      *ngIf="h.facturaId && obtenerEstadoPago(h.facturaId) === 'Pendiente'"
+                      (click)="pagarFactura(h.facturaId)">
+                Pagar
+              </button>
+              <button class="boton-secundario" type="button" (click)="editar(h)">Editar</button>
+              <button class="boton-secundario" type="button" (click)="eliminar(h)">Eliminar</button>
+            </div>
+          </div>
+          <div class="soft-panel mt-4">
+            <p class="form-label">Plan de cuidados</p>
+            <p class="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">{{ h.planCuidados || 'Sin plan registrado.' }}</p>
+          </div>
+          <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Responsable: {{ nombreUsuario(h.veterinarioResponsable) }} <span *ngIf="h.alta">- Alta: {{ h.alta | date:'dd/MM/yyyy HH:mm' }}</span></p>
+        </article>
+      </div>
+      </ng-container>
+
+      <div class="fixed inset-0 z-50 bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+           *ngIf="formularioAbierto"
+           (click)="cerrar()">
+        <aside class="panel h-full w-full max-w-xl overflow-y-auto p-5 shadow-2xl sm:p-6" (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">{{ editandoId ? 'Editar hospitalizacion' : 'Nuevo ingreso' }}</p>
+              <h2 class="section-title">Formulario de hospitalizacion</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Controla el ingreso, plan de cuidados y alta del paciente.</p>
+            </div>
+            <button class="boton-icono" type="button" (click)="cerrar()" aria-label="Cerrar formulario"><app-icono name="x" [size]="18"></app-icono></button>
+          </div>
+
+          <form class="mt-5 grid gap-4" (ngSubmit)="guardar()">
+            <div class="grid gap-4 sm:grid-cols-2" *ngIf="!editandoId">
+              <label class="grid gap-2" for="hospitalizacion-mascotaId">
+                <span class="form-label">Mascota</span>
+                <select id="hospitalizacion-mascotaId" class="campo" name="mascotaId" [(ngModel)]="form.mascotaId" required>
+                  <option [ngValue]="null">Seleccionar mascota</option>
+                  <option *ngFor="let mascota of mascotas" [ngValue]="mascota.id">{{ mascota.nombre }} - {{ mascota.propietario?.nombres }}</option>
+                </select>
+              </label>
+              <label class="grid gap-2" for="hospitalizacion-veterinarioId">
+                <span class="form-label">Veterinario responsable</span>
+                <select id="hospitalizacion-veterinarioId" class="campo" name="veterinarioId" [(ngModel)]="form.veterinarioId" required>
+                  <option [ngValue]="null">Seleccionar veterinario</option>
+                  <option *ngFor="let vet of veterinarios" [ngValue]="vet.id">{{ vet.nombres }} {{ vet.apellidos }}</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-3">
+              <label class="grid gap-2" for="hospitalizacion-jaula">
+                <span class="form-label">Jaula</span>
+                <input id="hospitalizacion-jaula" class="campo" name="jaula" [(ngModel)]="form.jaula">
+              </label>
+              <label class="grid gap-2" for="hospitalizacion-estado">
+                <span class="form-label">Estado</span>
+                <select id="hospitalizacion-estado" class="campo" name="estado" [(ngModel)]="form.estado">
+                  <option>Internado</option>
+                  <option>Observacion</option>
+                  <option>Critico</option>
+                  <option>Alta</option>
+                </select>
+              </label>
+              <label class="grid gap-2" for="hospitalizacion-precio">
+                <span class="form-label">Precio ($)</span>
+                <input id="hospitalizacion-precio" class="campo" type="number" name="precio" [(ngModel)]="form.precio" min="0" step="0.01" required>
+              </label>
+            </div>
+            <label class="grid gap-2" for="hospitalizacion-motivo">
+              <span class="form-label">Motivo</span>
+              <input id="hospitalizacion-motivo" class="campo" name="motivo" [(ngModel)]="form.motivo">
+            </label>
+            <label class="grid gap-2" for="hospitalizacion-planCuidados">
+              <span class="form-label">Plan de cuidados</span>
+              <textarea id="hospitalizacion-planCuidados" class="campo min-h-32" name="planCuidados" [(ngModel)]="form.planCuidados"></textarea>
+            </label>
+            <p *ngIf="editandoId" class="rounded-xl bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">La fecha de salida y el cierre de la cuenta se registran al seleccionar “Dar de alta y generar factura”.</p>
+            <button class="boton-primario w-full" type="submit">{{ editandoId ? 'Guardar cambios' : 'Registrar ingreso' }}</button>
+            <p class="text-sm font-bold text-emerald-700 dark:text-emerald-300" *ngIf="mensaje">{{ mensaje }}</p>
+          </form>
+        </aside>
+      </div>
+
+      <div class="fixed inset-0 z-[60] grid place-items-center bg-slate-950/60 p-3 backdrop-blur-sm" *ngIf="hospitalizacionCuenta" (click)="hospitalizacionCuenta = null; cuenta = null">
+        <section class="panel max-h-[92vh] w-full max-w-3xl overflow-y-auto p-5 shadow-2xl sm:p-7" role="dialog" aria-modal="true" aria-label="Cuenta acumulada de hospitalizacion" (click)="$event.stopPropagation()">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">Cuenta abierta desde el ingreso</p>
+              <h2 class="section-title">{{ hospitalizacionCuenta.mascota?.nombre }} · cargos acumulados</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Consulta, cirugía, laboratorio, estancia y consumos de farmacia se cobran juntos al dar el alta.</p>
+            </div>
+            <button class="boton-icono" type="button" (click)="hospitalizacionCuenta = null; cuenta = null" aria-label="Cerrar cuenta"><app-icono name="x" [size]="18"></app-icono></button>
+          </div>
+
+          <app-cargador *ngIf="!cuenta"></app-cargador>
+          <ng-container *ngIf="cuenta as c">
+            <div class="mt-5 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+              <table class="w-full min-w-[520px] text-left text-sm">
+                <thead class="bg-slate-50 text-xs font-black uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-300"><tr><th class="p-3">Cargo</th><th class="p-3">Tipo</th><th class="p-3 text-right">Cant.</th><th class="p-3 text-right">Total</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let item of c.items" class="border-t border-slate-100 dark:border-slate-800"><td class="p-3 font-bold">{{ item.descripcion }}</td><td class="p-3">{{ item.tipo }}</td><td class="p-3 text-right">{{ item.cantidad }}</td><td class="p-3 text-right">{{ item.subtotal | currency:'USD' }}</td></tr>
+                  <tr *ngIf="!c.items?.length"><td colspan="4" class="p-5 text-center text-slate-500">Aún no hay cargos registrados.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <form *ngIf="!c.cerrada" class="mt-4 grid gap-3 rounded-xl border border-cyan-100 bg-cyan-50/70 p-4 dark:border-cyan-900 dark:bg-cyan-950/20 sm:grid-cols-[1fr_100px_auto] sm:items-end" (ngSubmit)="agregarConsumo()">
+              <label class="grid gap-2"><span class="form-label">Agregar medicamento o producto usado</span><select class="campo" name="productoCodigo" [(ngModel)]="consumo.productoCodigo" required><option value="">Seleccionar producto de farmacia</option><option *ngFor="let producto of productos" [value]="producto.codigo" [disabled]="producto.activo === false || producto.stock < 1">{{ producto.nombre }} · {{ producto.precio | currency:'USD' }} · stock {{ producto.stock }}</option></select></label>
+              <label class="grid gap-2"><span class="form-label">Cantidad</span><input class="campo" type="number" name="cantidadConsumo" [(ngModel)]="consumo.cantidad" min="1" required></label>
+              <button class="boton-secundario" type="submit" [disabled]="procesandoCuenta || !consumo.productoCodigo">Agregar consumo</button>
+              <p class="text-xs text-slate-600 dark:text-slate-300 sm:col-span-3">El stock se descuenta al registrar el consumo y el importe se incorpora a la factura final.</p>
+            </form>
+
+            <div class="mt-5 ml-auto grid max-w-sm gap-2 rounded-xl bg-slate-50 p-4 dark:bg-slate-800">
+              <div class="flex justify-between"><span>Subtotal</span><strong>{{ c.subtotal | currency:'USD' }}</strong></div>
+              <div class="flex justify-between"><span>IVA 15%</span><strong>{{ c.iva | currency:'USD' }}</strong></div>
+              <div class="flex justify-between border-t border-slate-200 pt-2 text-lg dark:border-slate-700"><span>Total acumulado</span><strong>{{ c.total | currency:'USD' }}</strong></div>
+            </div>
+
+            <div class="mt-5 flex flex-wrap justify-end gap-2">
+              <button class="boton-secundario" type="button" (click)="hospitalizacionCuenta = null; cuenta = null">Cerrar</button>
+              <button *ngIf="!c.cerrada" class="boton-primario" type="button" [disabled]="procesandoCuenta" (click)="darAlta()">Dar de alta y generar factura</button>
+              <span *ngIf="c.cerrada" class="rounded-xl bg-emerald-50 px-4 py-2 font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">Cuenta cerrada · Factura {{ c.facturaId }}</span>
+            </div>
+          </ng-container>
+        </section>
+      </div>
+    </section>

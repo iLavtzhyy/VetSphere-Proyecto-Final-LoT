@@ -1,0 +1,2 @@
+:host{ --factura-primary:#087f8c; --factura-primary-dark:#075467; --factura-success:#07836f; --factura-warning:#b86a0a; --factura-bg:#f2f7f8; --factura-card:#ffffff; --factura-border:#dce7e9; --factura-text:#112c3a; --factura-muted:#66808a; --factura-shadow:0 14px 36px rgba(20, 57, 67, .07); display:block;}
+:host-context(.dark){ --factura-bg:#0b1720; --factura-card:#12232d; --factura-border:#29414c; --factura-text:#eef7f8; --factura-muted:#a4bac1; --factura-shadow:0 18px 45px rgba(0, 0, 0, .25);}

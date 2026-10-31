@@ -1,0 +1,564 @@
+    <section class="page-shell" @fadeInUp>
+      <div class="page-header">
+        <div>
+          <p class="page-eyebrow">Control de inventario</p>
+          <h1 class="page-title">Farmacia e inventario</h1>
+          <p class="page-subtitle">Stock, rotacion de ventas y promociones para impulsar los productos que no se venden.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button class="boton-primario" type="button" *ngIf="pestaniaActiva === 'inventario'" (click)="nuevoProducto()">
+            <app-icono name="pill" [size]="18"></app-icono>
+            Nuevo producto
+          </button>
+          <button class="boton-primario" type="button" *ngIf="pestaniaActiva === 'cupones' && esAdmin" (click)="nuevoCupon()">
+            <app-icono name="tag" [size]="18"></app-icono>
+            Nuevo cupon
+          </button>
+        </div>
+      </div>
+
+      <!-- Pestanas del modulo -->
+      <nav class="pestanas-farmacia" role="tablist" aria-label="Modulos de farmacia">
+        <button type="button" role="tab" [attr.aria-selected]="pestaniaActiva === 'inventario'"
+                [class.pestana-activa]="pestaniaActiva === 'inventario'" (click)="cambiarPestania('inventario')">
+          Inventario
+        </button>
+        <button type="button" role="tab" [attr.aria-selected]="pestaniaActiva === 'rotacion'"
+                [class.pestana-activa]="pestaniaActiva === 'rotacion'" (click)="cambiarPestania('rotacion')">
+          Baja rotacion
+        </button>
+        <button type="button" role="tab" [attr.aria-selected]="pestaniaActiva === 'cupones'"
+                [class.pestana-activa]="pestaniaActiva === 'cupones'" (click)="cambiarPestania('cupones')">
+          Cupones
+        </button>
+      </nav>
+
+      <details class="soap-pruebas" *ngIf="autorizacion.tieneRol(['ROLE_ADMIN'])" [open]="soapAbierto" (toggle)="soapAbierto = $any($event.target).open">
+        <summary><span><b>Pruebas de inventario entre VetSphere y SOAP</b><small>El administrador puede consultar y cambiar el mismo stock SQL a traves del servicio SOAP.</small></span><a [href]="wsdlUrl" target="_blank" rel="noreferrer" (click)="$event.stopPropagation()">Abrir WSDL</a></summary>
+        <div class="soap-pruebas-cuerpo">
+          <div class="soap-pruebas-campos">
+            <label for="farmacia-soapCodigo"><span>Producto</span><select id="farmacia-soapCodigo" class="campo" [(ngModel)]="soapCodigo" name="soapCodigo"><option *ngFor="let producto of productos" [value]="producto.codigo">{{ producto.codigo }} · {{ producto.nombre }}</option></select></label>
+            <label for="farmacia-soapCantidad"><span>Cantidad a sumar o descontar</span><input id="farmacia-soapCantidad" class="campo" type="number" min="1" step="1" [(ngModel)]="soapCantidad" name="soapCantidad"></label>
+            <label for="farmacia-soapStock"><span>Fijar stock exacto</span><input id="farmacia-soapStock" class="campo" type="number" min="0" step="1" [(ngModel)]="soapStock" name="soapStock"></label>
+          </div>
+          <div class="soap-pruebas-acciones">
+            <button class="boton-secundario" type="button" [disabled]="soapProbando" (click)="probarSoap()">Probar conexion / consultar</button>
+            <button class="boton-primario" type="button" [disabled]="soapProbando || !soapProducto" (click)="actualizarStockSoap('sumar')">Sumar por SOAP</button>
+            <button class="boton-secundario" type="button" [disabled]="soapProbando || !soapProducto" (click)="actualizarStockSoap('descontar')">Descontar por SOAP</button>
+            <button class="boton-secundario" type="button" [disabled]="soapProbando || !soapProducto" (click)="actualizarStockSoap('exacto')">Aplicar stock exacto</button>
+          </div>
+          <p *ngIf="soapMensaje" role="status" class="soap-pruebas-mensaje">{{ soapMensaje }}</p>
+        </div>
+      </details>
+
+      <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200" *ngIf="mensaje">
+        {{ mensaje }}
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- PESTANA: INVENTARIO                                              -->
+      <!-- ============================================================= -->
+      <ng-container *ngIf="pestaniaActiva === 'inventario'">
+        <app-cargador *ngIf="cargando"></app-cargador>
+
+        <ng-container *ngIf="!cargando">
+          <div class="grid gap-4 md:grid-cols-4">
+            <article class="stat-card"><p class="stat-label">Productos</p><p class="stat-value">{{ productos.length }}</p><p class="stat-note">Activos</p></article>
+            <article class="stat-card"><p class="stat-label">Stock critico</p><p class="stat-value text-rose-700 dark:text-rose-300">{{ criticos }}</p><p class="stat-note">Alertas</p></article>
+            <article class="stat-card"><p class="stat-label">Valor inventario</p><p class="stat-value text-emerald-700 dark:text-emerald-300">${{ valorInventario | number:'1.2-2' }}</p><p class="stat-note">Calculado</p></article>
+            <article class="stat-card"><p class="stat-label">Stock total</p><p class="stat-value">{{ stockTotal }}</p><p class="stat-note">Unidades</p></article>
+          </div>
+
+          <div class="panel filtros-farmacia">
+            <div class="grid gap-3 md:grid-cols-[260px_1fr]">
+              <label class="sr-only" for="farmacia-categoria-activa">Filtrar por categoria</label>
+              <select id="farmacia-categoria-activa" class="campo" [(ngModel)]="categoriaActiva" name="categoriaActiva">
+                <option *ngFor="let categoria of categorias">{{ categoria }}</option>
+              </select>
+              <label class="sr-only" for="farmacia-busqueda">Buscar productos</label>
+              <input id="farmacia-busqueda" class="campo w-full" placeholder="Buscar producto, codigo o categoria..." [(ngModel)]="busqueda">
+            </div>
+          </div>
+
+          <section class="categoria-section" *ngFor="let grupo of gruposFiltrados">
+            <header>
+              <div>
+                <p class="page-eyebrow">Categoria</p>
+                <h2>{{ grupo.categoria }}</h2>
+              </div>
+              <span>{{ grupo.productos.length }} productos</span>
+            </header>
+
+            <div class="table-wrap overflow-x-auto">
+              <table class="data-table">
+                <thead><tr><th>Codigo</th><th>Producto</th><th>Categoria</th><th>Precio</th><th>Descuento</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let p of grupo.productos">
+                    <td class="font-black text-slate-950 dark:text-white">{{ p.codigo }}</td>
+                    <td>{{ p.nombre }}</td>
+                    <td>{{ p.categoria }}</td>
+                    <td class="font-black text-emerald-700 dark:text-emerald-300">${{ p.precio | number:'1.2-2' }}</td>
+                    <td>
+                      <span *ngIf="p.descuento" class="badge badge-info">-{{ p.descuento }}%</span>
+                      <span *ngIf="!p.descuento" class="text-slate-400">-</span>
+                    </td>
+                    <td><b class="text-slate-950 dark:text-white">{{ p.stock }}</b> / {{ p.stockCritico }}</td>
+                    <td><span class="badge" [ngClass]="p.stock <= p.stockCritico ? 'badge-danger' : 'badge-ok'">{{ p.stock <= p.stockCritico ? 'Critico' : 'Activo' }}</span></td>
+                    <td>
+                      <div class="acciones-producto">
+                        <button class="accion-producto accion-facturar" type="button" (click)="abrirFacturar(p)">Facturar</button>
+                        <button class="accion-producto" type="button" (click)="abrirStock(p)">Stock</button>
+                        <button class="accion-producto" type="button" (click)="editarProducto(p)">Editar</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </ng-container>
+      </ng-container>
+
+      <!-- ============================================================= -->
+      <!-- PESTANA: BAJA ROTACION                                           -->
+      <!-- ============================================================= -->
+      <ng-container *ngIf="pestaniaActiva === 'rotacion'">
+        <div class="panel">
+          <div class="grid gap-3 md:grid-cols-[180px_180px_auto] md:items-end">
+            <label class="grid gap-2" for="farmacia-diasVentana">
+              <span class="form-label">Ventana de analisis (dias)</span>
+              <input id="farmacia-diasVentana" class="campo" type="number" min="7" max="365" [(ngModel)]="diasVentana" name="diasVentana">
+            </label>
+            <label class="grid gap-2" for="farmacia-diasUmbral">
+              <span class="form-label">Dias sin vender (umbral)</span>
+              <input id="farmacia-diasUmbral" class="campo" type="number" min="7" max="365" [(ngModel)]="diasUmbral" name="diasUmbral">
+            </label>
+            <button class="boton-primario" type="button" [disabled]="cargandoRotacion" (click)="cargarRotacion()">
+              Analizar rotacion
+            </button>
+          </div>
+          <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            Un producto se considera de <b>baja rotacion</b> cuando lleva mas de {{ diasUmbral }} dias sin venderse
+            o no registro ninguna venta en los ultimos {{ diasVentana }} dias.
+          </p>
+        </div>
+
+        <app-cargador *ngIf="cargandoRotacion"></app-cargador>
+
+        <ng-container *ngIf="!cargandoRotacion && rotacion">
+          <div class="grid gap-4 md:grid-cols-4 mt-4">
+            <article class="stat-card">
+              <p class="stat-label">Productos analizados</p>
+              <p class="stat-value">{{ rotacion.resumen.totalProductos }}</p>
+              <p class="stat-note">{{ rotacion.resumen.diasVentana }} dias de ventana</p>
+            </article>
+            <article class="stat-card">
+              <p class="stat-label">Baja rotacion</p>
+              <p class="stat-value text-amber-600 dark:text-amber-300">{{ rotacion.resumen.productosBajaRotacion }}</p>
+              <p class="stat-note">Requieren promocion</p>
+            </article>
+            <article class="stat-card">
+              <p class="stat-label">Sin rotacion</p>
+              <p class="stat-value text-rose-600 dark:text-rose-300">{{ rotacion.resumen.productosSinRotacion }}</p>
+              <p class="stat-note">Nunca vendidos</p>
+            </article>
+            <article class="stat-card">
+              <p class="stat-label">Capital dormido</p>
+              <p class="stat-value text-emerald-700 dark:text-emerald-300">${{ rotacion.resumen.capitalDormido | number:'1.2-2' }}</p>
+              <p class="stat-note">Valor sin salida</p>
+            </article>
+          </div>
+
+          <div class="panel mt-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p class="form-label">Filtro rapido</p>
+                <div class="flex flex-wrap gap-2 mt-1">
+                  <button type="button" class="badge" [class.badge-info]="filtroRotacion === 'TODOS'" (click)="filtroRotacion = 'TODOS'">Todos ({{ rotacion.productos.length }})</button>
+                  <button type="button" class="badge" [class.badge-warn]="filtroRotacion === 'BAJA_ROTACION'" (click)="filtroRotacion = 'BAJA_ROTACION'">Baja rotacion ({{ rotacion.resumen.productosBajaRotacion }})</button>
+                  <button type="button" class="badge" [class.badge-danger]="filtroRotacion === 'SIN_ROTACION'" (click)="filtroRotacion = 'SIN_ROTACION'">Sin rotacion ({{ rotacion.resumen.productosSinRotacion }})</button>
+                  <button type="button" class="badge" [class.badge-ok]="filtroRotacion === 'ROTACION_SALUDABLE'" (click)="filtroRotacion = 'ROTACION_SALUDABLE'">Saludables ({{ rotacion.resumen.productosSaludables }})</button>
+                </div>
+              </div>
+              <button class="boton-primario" type="button" *ngIf="esAdmin"
+                      [disabled]="generandoPromociones" (click)="generarPromociones()">
+                Generar promociones automaticamente
+              </button>
+            </div>
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400" *ngIf="!esAdmin">
+              Solo el administrador puede generar promociones automaticas. Tu puedes consultar el analisis.
+            </p>
+          </div>
+
+          <div class="table-wrap overflow-x-auto mt-4">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Categoria</th>
+                  <th>Stock</th>
+                  <th>Vendidos ({{ rotacion.resumen.diasVentana }}d)</th>
+                  <th>Ultima venta</th>
+                  <th>Cobertura</th>
+                  <th>Valor stock</th>
+                  <th>Estado</th>
+                  <th>Descuento sugerido</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of productosEnAlerta">
+                  <td>
+                    <b class="font-black text-slate-950 dark:text-white">{{ p.codigo }}</b>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">{{ p.nombre }}</div>
+                  </td>
+                  <td>{{ p.categoria }}</td>
+                  <td>{{ p.stock }}</td>
+                  <td>
+                    <b [class.text-rose-600]="p.unidadesVendidas === 0" class="dark:text-rose-300">{{ p.unidadesVendidas }}</b>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">{{ p.unidadesTotales }} historicos</div>
+                  </td>
+                  <td>{{ textoDiasSinVenta(p.diasSinVenta) }}</td>
+                  <td>{{ p.diasCobertura === null ? '-' : p.diasCobertura + ' dias' }}</td>
+                  <td>${{ p.valorInventario | number:'1.2-2' }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="claseEstado(p.estado)">{{ etiquetaEstado(p.estado) }}</span>
+                    <div class="mt-1 text-xs" *ngIf="p.cuponActivo"><span class="badge badge-ok">Promo activa</span></div>
+                  </td>
+                  <td>
+                    <span *ngIf="p.descuentoSugerido > 0" class="badge badge-warn">-{{ p.descuentoSugerido }}%</span>
+                    <span *ngIf="p.descuentoSugerido <= 0" class="text-slate-400">-</span>
+                  </td>
+                </tr>
+                <tr *ngIf="productosEnAlerta.length === 0">
+                  <td colspan="9" class="text-center text-slate-500 dark:text-slate-400">No hay productos que coincidan con el filtro.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+      </ng-container>
+
+      <!-- ============================================================= -->
+      <!-- PESTANA: CUPONES                                                 -->
+      <!-- ============================================================= -->
+      <ng-container *ngIf="pestaniaActiva === 'cupones'">
+        <app-cargador *ngIf="cargandoCupones"></app-cargador>
+
+        <ng-container *ngIf="!cargandoCupones">
+          <div class="panel">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <p class="text-sm text-slate-500 dark:text-slate-400">
+                Los cupones se validan y se calculan en el servidor: el descuento que ve el cliente es el que se cobra.
+              </p>
+              <button class="boton-secundario" type="button" (click)="cargarCupones()">Actualizar</button>
+            </div>
+          </div>
+
+          <div class="table-wrap overflow-x-auto mt-4">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Codigo</th>
+                  <th>Descripcion</th>
+                  <th>Alcance</th>
+                  <th>Descuento</th>
+                  <th>Vigencia</th>
+                  <th>Usos</th>
+                  <th>Origen</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let cupon of cupones">
+                  <td class="font-black text-slate-950 dark:text-white">{{ cupon.codigo }}</td>
+                  <td>{{ cupon.descripcion || '-' }}</td>
+                  <td>{{ textoAlcance(cupon) }}</td>
+                  <td><span class="badge badge-info">{{ textoDescuentoCupon(cupon) }}</span></td>
+                  <td class="text-xs">{{ cupon.fechaInicio | date:'dd/MM/yy' }} → {{ cupon.fechaFin | date:'dd/MM/yy' }}</td>
+                  <td>{{ cupon.usosActuales }}<span *ngIf="cupon.usosMaximos"> / {{ cupon.usosMaximos }}</span></td>
+                  <td><span class="badge">{{ cupon.origen === 'BAJA_ROTACION' ? 'Baja rotacion' : 'Manual' }}</span></td>
+                  <td><span class="badge" [ngClass]="cupon.activo ? 'badge-ok' : 'badge-danger'">{{ cupon.activo ? 'Activo' : 'Inactivo' }}</span></td>
+                  <td>
+                    <div class="acciones-producto" *ngIf="esAdmin">
+                      <button class="accion-producto" type="button" (click)="editarCupon(cupon)">Editar</button>
+                      <button class="accion-producto" type="button" (click)="alternarCupon(cupon)">{{ cupon.activo ? 'Desactivar' : 'Activar' }}</button>
+                      <button class="accion-producto accion-facturar" type="button" (click)="eliminarCupon(cupon)">Eliminar</button>
+                    </div>
+                    <span *ngIf="!esAdmin" class="text-xs text-slate-500 dark:text-slate-400">Solo lectura</span>
+                  </td>
+                </tr>
+                <tr *ngIf="cupones.length === 0">
+                  <td colspan="9" class="text-center text-slate-500 dark:text-slate-400">Todavia no hay cupones registrados.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+      </ng-container>
+
+      <!-- Modal formulario de producto / stock -->
+      <div class="fixed inset-0 z-50 bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+           *ngIf="formularioAbierto"
+           (click)="cerrarFormulario()">
+        <aside class="panel h-full w-full max-w-lg overflow-y-auto p-5 shadow-2xl sm:p-6" (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">{{ modoStock ? 'Movimiento farmacia' : editandoCodigo ? 'Editar producto' : 'Nuevo producto' }}</p>
+              <h2 class="section-title">{{ modoStock ? productoSeleccionado?.nombre : 'Formulario de producto' }}</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Actualiza el inventario y conserva los cambios en SQL Server.</p>
+            </div>
+            <button class="boton-icono" type="button" (click)="cerrarFormulario()" aria-label="Cerrar formulario"><app-icono name="x" [size]="18"></app-icono></button>
+          </div>
+
+          <form class="mt-5 grid gap-4" *ngIf="!modoStock" (ngSubmit)="guardarProducto()">
+            <label class="grid gap-2" for="farmacia-codigo">
+              <span class="form-label">Codigo</span>
+              <input id="farmacia-codigo" class="campo" name="codigo" [(ngModel)]="form.codigo" [disabled]="!!editandoCodigo" required>
+            </label>
+            <label class="grid gap-2" for="farmacia-nombre">
+              <span class="form-label">Nombre</span>
+              <input id="farmacia-nombre" class="campo" name="nombre" [(ngModel)]="form.nombre" required>
+            </label>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="farmacia-categoria">
+                <span class="form-label">Categoria</span>
+                <input id="farmacia-categoria" class="campo" name="categoria" [(ngModel)]="form.categoria">
+              </label>
+              <label class="grid gap-2" for="farmacia-precio">
+                <span class="form-label">Precio</span>
+                <input id="farmacia-precio" class="campo" type="number" step="0.01" min="0" name="precio" [(ngModel)]="form.precio">
+              </label>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="farmacia-stock">
+                <span class="form-label">Stock actual</span>
+                <input id="farmacia-stock" class="campo" type="number" name="stock" [(ngModel)]="form.stock">
+              </label>
+              <label class="grid gap-2" for="farmacia-stockCritico">
+                <span class="form-label">Stock critico</span>
+                <input id="farmacia-stockCritico" class="campo" type="number" name="stockCritico" [(ngModel)]="form.stockCritico">
+              </label>
+            </div>
+            <label class="grid gap-2" for="farmacia-descuento">
+              <span class="form-label">Descuento permanente (%)</span>
+              <input id="farmacia-descuento" class="campo" type="number" min="0" max="100" step="0.01" name="descuento" [(ngModel)]="form.descuento">
+              <small class="text-xs text-slate-500 dark:text-slate-400">Se aplica siempre a este producto en la factura. Dejar en 0 para no aplicar descuento.</small>
+            </label>
+            <label class="flex items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm font-bold dark:border-slate-800" for="farmacia-prioridadAlta">
+              <input id="farmacia-prioridadAlta" type="checkbox" name="prioridadAlta" [(ngModel)]="form.prioridadAlta">
+              Prioridad alta para alertas
+            </label>
+            <button class="boton-primario w-full" type="submit">{{ editandoCodigo ? 'Guardar producto' : 'Registrar producto' }}</button>
+          </form>
+
+          <form class="mt-5 grid gap-4" *ngIf="modoStock" (ngSubmit)="guardarStock()">
+            <div class="soft-panel">
+              <p class="form-label">Stock actual</p>
+              <p class="mt-2 text-4xl font-black text-slate-950 dark:text-white">{{ productoSeleccionado?.stock }}</p>
+            </div>
+            <label class="grid gap-2" for="farmacia-cantidadMovimiento">
+              <span class="form-label">Sumar unidades al stock</span>
+              <input id="farmacia-cantidadMovimiento" class="campo" type="number" name="cantidadMovimiento" [(ngModel)]="cantidadMovimiento">
+            </label>
+            <label class="grid gap-2" for="farmacia-stockExacto">
+              <span class="form-label">O fijar stock exacto</span>
+              <input id="farmacia-stockExacto" class="campo" type="number" name="stockExacto" [(ngModel)]="stockExacto">
+            </label>
+            <button class="boton-primario w-full" type="submit">Aplicar stock</button>
+          </form>
+
+          <p class="mt-4 text-sm font-bold text-emerald-700 dark:text-emerald-300" *ngIf="mensaje">{{ mensaje }}</p>
+        </aside>
+      </div>
+
+      <!-- Modal formulario de cupon -->
+      <div class="cupon-modal-overlay"
+           *ngIf="formularioCuponAbierto"
+           (click)="formularioCuponAbierto = false">
+        <aside class="panel cupon-modal-panel" (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">{{ editandoCuponId ? 'Editar cupon' : 'Nuevo cupon' }}</p>
+              <h2 class="section-title">Datos de la promocion</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Si no defines alcance, el cupon aplica a todo el catalogo de la farmacia.</p>
+            </div>
+            <button class="boton-icono" type="button" (click)="formularioCuponAbierto = false" aria-label="Cerrar"><app-icono name="x" [size]="18"></app-icono></button>
+          </div>
+
+          <form class="cupon-modal-form" (ngSubmit)="guardarCupon()">
+            <label class="cupon-field" for="farmacia-cuponCodigo">
+              <span class="form-label">Codigo del cupon</span>
+              <input id="farmacia-cuponCodigo" class="campo" name="cuponCodigo" [(ngModel)]="formCupon.codigo" [disabled]="!!editandoCuponId" placeholder="PROMO-10">
+              <small class="text-xs text-slate-500 dark:text-slate-400">Si lo dejas vacio, el servidor genera uno legible (por ejemplo PROMO-MED-001-10).</small>
+            </label>
+            <label class="cupon-field" for="farmacia-cuponDescripcion">
+              <span class="form-label">Descripcion</span>
+              <input id="farmacia-cuponDescripcion" class="campo" name="cuponDescripcion" [(ngModel)]="formCupon.descripcion" placeholder="Promocion de antifleo">
+            </label>
+            <div class="cupon-fields-grid">
+              <label class="cupon-field" for="farmacia-cuponTipo">
+                <span class="form-label">Tipo de descuento</span>
+                <select id="farmacia-cuponTipo" class="campo" name="cuponTipo" [(ngModel)]="formCupon.tipoDescuento">
+                  <option value="PORCENTAJE">Porcentaje (%)</option>
+                  <option value="VALOR_FIJO">Valor fijo ($)</option>
+                </select>
+              </label>
+              <label class="cupon-field" for="farmacia-cuponValor">
+                <span class="form-label">Valor</span>
+                <input id="farmacia-cuponValor" class="campo" type="number" min="0" step="0.01" name="cuponValor" [(ngModel)]="formCupon.valor">
+              </label>
+            </div>
+            <div class="cupon-fields-grid">
+              <label class="cupon-field" for="farmacia-cuponProducto">
+                <span class="form-label">Producto (opcional)</span>
+                <select id="farmacia-cuponProducto" class="campo" name="cuponProducto" [(ngModel)]="formCupon.productoCodigo">
+                  <option value="">Todos los productos</option>
+                  <option *ngFor="let producto of productos" [value]="producto.codigo">{{ producto.codigo }} · {{ producto.nombre }}</option>
+                </select>
+              </label>
+              <label class="cupon-field" for="farmacia-cuponCategoria">
+                <span class="form-label">Categoria (opcional)</span>
+                <select id="farmacia-cuponCategoria" class="campo" name="cuponCategoria" [(ngModel)]="formCupon.categoria">
+                  <option value="">Todas las categorias</option>
+                  <option *ngFor="let categoria of categoriasReales" [value]="categoria">{{ categoria }}</option>
+                </select>
+              </label>
+            </div>
+            <label class="cupon-field" for="farmacia-cuponMinimo">
+              <span class="form-label">Subtotal minimo ($)</span>
+              <input id="farmacia-cuponMinimo" class="campo" type="number" min="0" step="0.01" name="cuponMinimo" [(ngModel)]="formCupon.minimoSubtotal">
+            </label>
+            <div class="cupon-fields-grid">
+              <label class="cupon-field" for="farmacia-cuponInicio">
+                <span class="form-label">Vigente desde</span>
+                <input id="farmacia-cuponInicio" class="campo" type="datetime-local" name="cuponInicio" [(ngModel)]="formCupon.fechaInicio">
+              </label>
+              <label class="cupon-field" for="farmacia-cuponFin">
+                <span class="form-label">Vigente hasta</span>
+                <input id="farmacia-cuponFin" class="campo" type="datetime-local" name="cuponFin" [(ngModel)]="formCupon.fechaFin">
+              </label>
+            </div>
+            <label class="cupon-field" for="farmacia-cuponUsos">
+              <span class="form-label">Usos maximos</span>
+              <input id="farmacia-cuponUsos" class="campo" type="number" min="0" step="1" name="cuponUsos" [(ngModel)]="formCupon.usosMaximos">
+              <small class="text-xs text-slate-500 dark:text-slate-400">Dejar vacio para que el cupon no tenga limite de usos.</small>
+            </label>
+            <label class="cupon-activo" for="farmacia-cuponActivo">
+              <input id="farmacia-cuponActivo" type="checkbox" name="cuponActivo" [(ngModel)]="formCupon.activo">
+              Cupon activo
+            </label>
+            <button class="boton-primario cupon-submit" type="submit">{{ editandoCuponId ? 'Guardar cambios' : 'Crear cupon' }}</button>
+          </form>
+        </aside>
+      </div>
+
+      <!-- Modal Facturacion Farmacia -->
+      <div class="fixed inset-0 z-50 bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+           *ngIf="mostrarFacturacionModal"
+           (click)="mostrarFacturacionModal = false">
+        <aside class="panel h-full w-full max-w-lg overflow-y-auto p-5 shadow-2xl sm:p-6" (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">Facturar producto</p>
+              <h2 class="section-title">{{ productoAFacturar?.nombre }}</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">El servidor calcula los importes, aplica el cupon y descuenta el stock en la misma operacion.</p>
+            </div>
+            <button class="boton-icono" type="button" (click)="mostrarFacturacionModal = false" aria-label="Cerrar"><app-icono name="x" [size]="18"></app-icono></button>
+          </div>
+
+          <form class="mt-5 grid gap-4" (ngSubmit)="facturarAEstancia ? agregarAEstancia() : confirmarFacturacion()">
+            <div *ngIf="estanciasActivas.length" class="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              <button type="button" class="rounded-lg px-3 py-2 text-sm font-black" [ngClass]="!facturarAEstancia ? 'bg-white shadow-sm dark:bg-slate-700' : ''" (click)="facturarAEstancia = false">Venta inmediata</button>
+              <button type="button" class="rounded-lg px-3 py-2 text-sm font-black" [ngClass]="facturarAEstancia ? 'bg-white shadow-sm dark:bg-slate-700' : ''" (click)="facturarAEstancia = true">Cargar a hospitalización</button>
+            </div>
+
+            <label *ngIf="facturarAEstancia" class="grid gap-2" for="farmacia-cuentaHospitalizacion">
+              <span class="form-label">Paciente internado</span>
+              <select id="farmacia-cuentaHospitalizacion" class="campo" name="cuentaHospitalizacion" [(ngModel)]="hospitalizacionId" required>
+                <option [ngValue]="null">Seleccionar estancia activa</option>
+                <option *ngFor="let h of estanciasActivas" [ngValue]="h.id">{{ h.mascota?.nombre }} · Jaula {{ h.jaula }} · desde {{ h.ingreso | date:'dd/MM HH:mm' }}</option>
+              </select>
+              <span class="text-xs text-slate-500">El producto se agrega a la cuenta de la mascota y se cobra junto con los demás cargos al dar el alta.</span>
+            </label>
+
+            <label *ngIf="!facturarAEstancia" class="grid gap-2" for="farmacia-facturacionClienteId">
+              <span class="form-label">Cliente / Propietario</span>
+              <select id="farmacia-facturacionClienteId" class="campo" name="facturacionClienteId" [(ngModel)]="facturacionClienteId" (change)="onFacturacionClienteChange()" required>
+                <option [ngValue]="null">Seleccionar cliente</option>
+                <option *ngFor="let cliente of clientes" [ngValue]="cliente.id">{{ cliente.nombres }} {{ cliente.apellidos }}</option>
+              </select>
+            </label>
+
+            <label *ngIf="!facturarAEstancia" class="grid gap-2" for="farmacia-facturacionMascotaId">
+              <span class="form-label">Mascota / Paciente</span>
+              <select id="farmacia-facturacionMascotaId" class="campo" name="facturacionMascotaId" [(ngModel)]="facturacionMascotaId" required>
+                <option [ngValue]="null">Seleccionar mascota</option>
+                <option *ngFor="let mascota of mascotasFiltradas" [ngValue]="mascota.id">{{ mascota.nombre }} ({{ mascota.especie }})</option>
+              </select>
+            </label>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="farmacia-facturacionCantidad">
+                <span class="form-label">Cantidad (Stock: {{ productoAFacturar?.stock }})</span>
+                <input id="farmacia-facturacionCantidad" class="campo" type="number" name="facturacionCantidad" [(ngModel)]="facturacionCantidad" min="1" [max]="productoAFacturar?.stock || 1" required>
+              </label>
+
+              <label *ngIf="!facturarAEstancia" class="grid gap-2" for="farmacia-facturacionEstadoPago">
+                <span class="form-label">Estado de pago</span>
+                <select id="farmacia-facturacionEstadoPago" class="campo" name="facturacionEstadoPago" [(ngModel)]="facturacionEstadoPago">
+                  <option>Pendiente</option>
+                  <option>Pagado</option>
+                </select>
+              </label>
+            </div>
+
+            <div *ngIf="!facturarAEstancia" class="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+              <label class="grid gap-2" for="farmacia-facturacionCupon">
+                <span class="form-label">Cupon de descuento (opcional)</span>
+                <input id="farmacia-facturacionCupon" class="campo" name="facturacionCupon" [(ngModel)]="facturacionCuponCodigo" placeholder="PROMO10" (keyup.enter)="simularCupon()">
+              </label>
+              <button class="boton-secundario" type="button" [disabled]="simulando || !facturacionCuponCodigo" (click)="simularCupon()">
+                {{ simulando ? 'Calculando...' : 'Aplicar cupon' }}
+              </button>
+            </div>
+
+            <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300" *ngIf="!facturarAEstancia && simulacion?.aplicado">
+              Cupon {{ simulacion?.codigo }} aplicado: -${{ simulacion?.descuento | number:'1.2-2' }}
+            </p>
+
+            <div class="soft-panel mt-2" *ngIf="!facturarAEstancia">
+              <div class="flex justify-between text-sm">
+                <span>Subtotal (x{{ facturacionCantidad }}):</span>
+                <b>${{ vistaPrevia.subtotal | number:'1.2-2' }}</b>
+              </div>
+              <div class="flex justify-between text-sm mt-1" *ngIf="vistaPrevia.descuento > 0">
+                <span>Descuento:</span>
+                <b class="text-amber-600 dark:text-amber-300">-${{ vistaPrevia.descuento | number:'1.2-2' }}</b>
+              </div>
+              <div class="flex justify-between text-sm mt-1">
+                <span>IVA (15%):</span>
+                <b>${{ vistaPrevia.impuestos | number:'1.2-2' }}</b>
+              </div>
+              <div class="flex justify-between text-base font-black text-slate-950 dark:text-white mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <span>Total Factura:</span>
+                <b class="text-emerald-700 dark:text-emerald-300">${{ vistaPrevia.total | number:'1.2-2' }}</b>
+              </div>
+              <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">El importe definitivo lo confirma el servidor al emitir la factura.</p>
+            </div>
+
+            <div class="soft-panel" *ngIf="!facturarAEstancia && ultimaFactura">
+              <p class="form-label">Factura emitida</p>
+              <p class="mt-1 font-black text-slate-950 dark:text-white">{{ ultimaFactura.numero }}</p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">
+                Total: ${{ ultimaFactura.total | number:'1.2-2' }}
+                <span *ngIf="ultimaFactura.descuento > 0"> · Descuento: -${{ ultimaFactura.descuento | number:'1.2-2' }}</span>
+                <span *ngIf="ultimaFactura.cupon"> · Cupon: {{ ultimaFactura.cupon }}</span>
+              </p>
+            </div>
+
+            <button class="boton-primario w-full mt-4" type="submit" [disabled]="simulando || (facturarAEstancia && !hospitalizacionId)">{{ facturarAEstancia ? (simulando ? 'Agregando consumo...' : 'Agregar a la cuenta de hospitalización') : 'Generar Factura' }}</button>
+          </form>
+        </aside>
+      </div>
+    </section>

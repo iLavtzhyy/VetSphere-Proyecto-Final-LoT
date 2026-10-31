@@ -1,0 +1,154 @@
+    <section class="page-shell" @fadeInUp>
+      <div class="page-header">
+        <div>
+          <p class="page-eyebrow">Registro clinico</p>
+          <h1 class="page-title">Consultas medicas</h1>
+          <p class="page-subtitle">Diagnosticos, tratamientos, signos vitales, costos y seguimiento por paciente.</p>
+        </div>
+        <button class="boton-primario" type="button" (click)="nuevaConsulta()">
+          <app-icono name="stethoscope" [size]="18"></app-icono>
+          Nueva consulta
+        </button>
+      </div>
+
+      <app-cargador *ngIf="cargando"></app-cargador>
+
+      <ng-container *ngIf="!cargando">
+      <div class="grid gap-4 md:grid-cols-5">
+        <article class="stat-card text-center" *ngFor="let tipo of tipos">
+          <p class="stat-value">{{ contar(tipo) }}</p>
+          <p class="stat-label">{{ tipo }}</p>
+        </article>
+      </div>
+
+      <div class="panel p-4">
+        <label class="sr-only" for="consultas-busqueda">Buscar consultas</label>
+        <input id="consultas-busqueda" class="campo w-full" placeholder="Buscar por mascota, cliente, veterinario o diagnostico..." [(ngModel)]="busqueda">
+      </div>
+
+      <div class="space-y-3">
+        <article class="panel p-5" *ngFor="let consulta of filtradas">
+          <div class="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <span class="badge" [ngClass]="badgeTipo(consulta.tipo)">{{ consulta.tipo }}</span>
+              <h2 class="mt-3 text-xl font-black text-slate-950 dark:text-white">{{ consulta.mascota }} - {{ consulta.cliente }}</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ consulta.fecha }} - {{ consulta.veterinario }}</p>
+              <p class="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">{{ consulta.diagnostico }}</p>
+              <p class="mt-1 text-xs font-bold text-rose-600 dark:text-rose-300">{{ consulta.tratamiento }}</p>
+            </div>
+            <div class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-left dark:border-slate-800 dark:bg-slate-950/40 lg:min-w-56 lg:text-right">
+              <p class="text-sm text-slate-500 dark:text-slate-400">{{ consulta.pesoKg }} kg - {{ consulta.temperatura }} C</p>
+              <p class="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-300">\${{ consulta.precio }}</p>
+              
+              <div class="mt-2 flex flex-col items-start lg:items-end gap-1">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 dark:bg-slate-900/60 dark:text-slate-300" 
+                      *ngIf="!consulta.facturaId">
+                  <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                  Sin Facturar
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300" 
+                      *ngIf="consulta.facturaId && obtenerEstadoPago(consulta.facturaId) === 'Pagado'">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Pagado
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                      *ngIf="consulta.facturaId && obtenerEstadoPago(consulta.facturaId) === 'Pendiente'">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  Pendiente
+                </span>
+                <button type="button" class="mt-1 px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-black transition cursor-pointer"
+                        *ngIf="consulta.facturaId && obtenerEstadoPago(consulta.facturaId) === 'Pendiente'"
+                        (click)="pagarFactura(consulta.facturaId)">
+                  Pagar
+                </button>
+              </div>
+
+              <div class="mt-3 flex gap-3 lg:justify-end">
+                <button class="action-link" type="button" (click)="editar(consulta)">Editar</button>
+                <button class="action-link" type="button" (click)="eliminar(consulta)">Eliminar</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+      </ng-container>
+
+      <div class="fixed inset-0 z-50 bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+           *ngIf="formularioAbierto"
+           (click)="cerrarFormulario()">
+        <aside class="panel h-full w-full max-w-xl overflow-y-auto p-5 shadow-2xl sm:p-6"
+               (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">{{ editandoId ? 'Editar consulta' : 'Nueva consulta' }}</p>
+              <h2 class="section-title">Formulario de consulta</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Registra la atencion medica sin perder el historial de la mascota.</p>
+            </div>
+            <button class="boton-icono" type="button" (click)="cerrarFormulario()" aria-label="Cerrar formulario">
+              <app-icono name="x" [size]="18"></app-icono>
+            </button>
+          </div>
+
+          <form class="mt-5 grid gap-4" (ngSubmit)="guardar()">
+            <div class="grid gap-4 sm:grid-cols-2" *ngIf="!editandoId">
+              <label class="grid gap-2" for="consultas-mascotaId">
+                <span class="form-label">Mascota</span>
+                <select id="consultas-mascotaId" class="campo" name="mascotaId" [(ngModel)]="form.mascotaId" required>
+                  <option [ngValue]="null">Seleccionar mascota</option>
+                  <option *ngFor="let mascota of mascotas" [ngValue]="mascota.id">{{ mascota.nombre }} - {{ mascota.propietario?.nombres }}</option>
+                </select>
+              </label>
+              <label class="grid gap-2" for="consultas-veterinarioId">
+                <span class="form-label">Veterinario</span>
+                <select id="consultas-veterinarioId" class="campo" name="veterinarioId" [(ngModel)]="form.veterinarioId" required>
+                  <option [ngValue]="null">Seleccionar veterinario</option>
+                  <option *ngFor="let vet of veterinarios" [ngValue]="vet.id">{{ vet.nombres }} {{ vet.apellidos }}</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="consultas-tipo">
+                <span class="form-label">Tipo</span>
+                <select id="consultas-tipo" class="campo" name="tipo" [(ngModel)]="form.tipo">
+                  <option>Rutina</option>
+                  <option>Emergencia</option>
+                  <option>Control</option>
+                  <option>Cirugia</option>
+                  <option>Vacunacion</option>
+                </select>
+              </label>
+              <label class="grid gap-2" for="consultas-temperatura">
+                <span class="form-label">Temperatura</span>
+                <input id="consultas-temperatura" class="campo" type="number" step="0.1" name="temperatura" [(ngModel)]="form.temperatura">
+              </label>
+            </div>
+
+            <label class="grid gap-2" for="consultas-motivo">
+              <span class="form-label">Motivo</span>
+              <input id="consultas-motivo" class="campo" name="motivo" [(ngModel)]="form.motivo">
+            </label>
+            <label class="grid gap-2" for="consultas-diagnostico">
+              <span class="form-label">Diagnostico</span>
+              <textarea id="consultas-diagnostico" class="campo min-h-28" name="diagnostico" [(ngModel)]="form.diagnostico"></textarea>
+            </label>
+            <label class="grid gap-2" for="consultas-tratamiento">
+              <span class="form-label">Tratamiento</span>
+              <textarea id="consultas-tratamiento" class="campo min-h-28" name="tratamiento" [(ngModel)]="form.tratamiento"></textarea>
+            </label>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="consultas-frecuenciaCardiaca">
+                <span class="form-label">Frecuencia cardiaca</span>
+                <input id="consultas-frecuenciaCardiaca" class="campo" type="number" name="frecuenciaCardiaca" [(ngModel)]="form.frecuenciaCardiaca">
+              </label>
+              <label class="grid gap-2" for="consultas-frecuenciaRespiratoria">
+                <span class="form-label">Frecuencia respiratoria</span>
+                <input id="consultas-frecuenciaRespiratoria" class="campo" type="number" name="frecuenciaRespiratoria" [(ngModel)]="form.frecuenciaRespiratoria">
+              </label>
+            </div>
+            <button class="boton-primario w-full" type="submit">{{ editandoId ? 'Guardar cambios' : 'Registrar consulta' }}</button>
+            <p class="text-sm font-bold text-emerald-700 dark:text-emerald-300" *ngIf="mensaje">{{ mensaje }}</p>
+          </form>
+        </aside>
+      </div>
+    </section>

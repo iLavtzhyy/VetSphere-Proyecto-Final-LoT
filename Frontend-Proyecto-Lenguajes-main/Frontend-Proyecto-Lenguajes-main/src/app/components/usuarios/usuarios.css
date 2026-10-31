@@ -1,0 +1,47 @@
+/* =========================================================
+   VetSphere - Usuarios Roles Tabs Styling
+   ========================================================= */
+
+:host {
+  --user-primary: #0891b2;
+  --user-border: #dce8ef;
+  --user-card: #ffffff;
+  --user-text: #0f172a;
+  display: block;
+}
+
+:host-context(.dark) {
+  --user-border: #233244;
+  --user-card: #101b2b;
+  --user-text: #f8fafc;
+}
+
+.roles-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 1.25rem 1.25rem 1.25rem;
+  border-bottom: 1px solid var(--user-border);
+}
+
+.tab-boton {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--user-border);
+  border-radius: 0.5rem;
+  background: var(--user-card);
+  color: var(--user-text);
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.tab-boton:hover {
+  background: rgba(8, 145, 178, 0.05);
+}
+
+.tab-boton-activo {
+  background: var(--user-primary) !important;
+  color: #fff !important;
+  border-color: var(--user-primary) !important;
+}

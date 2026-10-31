@@ -1,0 +1,157 @@
+    <section class="page-shell" @fadeInUp>
+      <div class="page-header">
+        <div>
+          <p class="page-eyebrow">Recepcion</p>
+          <h1 class="page-title">Admisiones y agenda</h1>
+          <p class="page-subtitle">Gestion de citas, confirmaciones, triage, recepcion de pacientes y derivacion al area clinica.</p>
+        </div>
+        <button class="boton-primario" type="button" (click)="nueva()">
+          <app-icono name="calendar" [size]="18"></app-icono>
+          Nueva cita
+        </button>
+      </div>
+
+      <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200" *ngIf="mensaje">
+        {{ mensaje }}
+      </div>
+
+      <app-cargador *ngIf="cargando"></app-cargador>
+
+      <ng-container *ngIf="!cargando">
+      <div class="grid gap-5 md:grid-cols-3">
+        <article class="stat-card" *ngFor="let item of panel | keyvalue">
+          <p class="stat-label">{{ item.key }}</p>
+          <p class="stat-value">{{ item.value }}</p>
+          <p class="stat-note">Recepcion</p>
+        </article>
+      </div>
+
+      <div class="panel p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 class="section-title">Flujo de admisión</h2>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Personaliza las etapas y el estado de cita que representa cada una.</p>
+          </div>
+          <button class="boton-secundario" type="button" (click)="nuevaEtapa()" [disabled]="etapaGuardando">
+            <app-icono name="plus" [size]="16"></app-icono> Crear etapa
+          </button>
+        </div>
+        <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <article *ngFor="let etapa of etapasFlujo" class="rounded-xl border p-4 shadow-sm" [ngClass]="clasesColor[etapa.color]">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs font-black uppercase tracking-wide opacity-70">Etapa {{ etapa.posicion }}</p>
+                <h3 class="mt-1 truncate text-base font-black">{{ etapa.nombre }}</h3>
+              </div>
+              <span class="rounded-full bg-white/70 px-2 py-1 text-xs font-black dark:bg-black/20">{{ contarCitas(etapa.estadoCita) }} citas</span>
+            </div>
+            <p class="mt-2 min-h-10 text-sm opacity-80">{{ etapa.descripcion || 'Sin descripcion' }}</p>
+            <p class="mt-2 text-xs font-bold">Estado: {{ etapa.estadoCita }}</p>
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-current/10 pt-3">
+              <div class="flex gap-1">
+                <button class="boton-icono !h-8 !w-8" type="button" (click)="moverEtapa(etapa, -1)" [disabled]="etapa.posicion === 1 || etapaGuardando" [attr.aria-label]="'Mover ' + etapa.nombre + ' arriba'">↑</button>
+                <button class="boton-icono !h-8 !w-8" type="button" (click)="moverEtapa(etapa, 1)" [disabled]="etapa.posicion === etapasFlujo.length || etapaGuardando" [attr.aria-label]="'Mover ' + etapa.nombre + ' abajo'">↓</button>
+                <button class="text-sm font-black underline-offset-2 hover:underline" type="button" (click)="editarEtapa(etapa)">Editar</button>
+              </div>
+              <button class="text-xs font-black" type="button" (click)="cambiarEstadoEtapa(etapa, !etapa.activa)">
+                {{ etapa.activa ? 'Desactivar' : 'Activar' }}
+              </button>
+              <button class="text-xs font-black text-rose-700 hover:underline dark:text-rose-300" type="button" (click)="solicitarEliminarEtapa(etapa)">Eliminar</button>
+            </div>
+            <div class="mt-3 rounded-lg bg-white/80 p-3 text-sm dark:bg-black/20" *ngIf="confirmandoEliminacion === etapa.id">
+              <p class="font-bold">¿Eliminar esta etapa del flujo?</p>
+              <div class="mt-2 flex justify-end gap-2">
+                <button class="boton-secundario !min-h-8 !px-3 !py-1 text-xs" type="button" (click)="confirmandoEliminacion = null">Cancelar</button>
+                <button class="rounded-md bg-rose-700 px-3 py-1 text-xs font-black text-white" type="button" (click)="eliminarEtapa(etapa)">Eliminar</button>
+              </div>
+            </div>
+          </article>
+        </div>
+        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">No se puede eliminar una etapa que ya tenga citas; puedes desactivarla para dejar de asignarla.</p>
+      </div>
+
+      <div class="table-wrap overflow-x-auto">
+        <div class="border-b border-slate-200 p-5 dark:border-slate-800">
+          <h2 class="section-title">Citas registradas</h2>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Datos cargados desde SQL Server.</p>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Fecha</th><th>Mascota</th><th>Veterinario</th><th>Motivo</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let cita of citas">
+              <td class="font-black text-slate-950 dark:text-white">{{ cita.fechaHora | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ cita.mascota?.nombre || 'Sin mascota' }}</td>
+              <td>{{ cita.veterinario ? (cita.veterinario.nombres + ' ' + cita.veterinario.apellidos) : 'Sin asignar' }}</td>
+              <td>{{ cita.motivo }}</td>
+              <td>
+                <select class="badge badge-info cursor-pointer border-0 outline-none focus:ring-2 focus:ring-cyan-500"
+                        [ngModel]="cita.estado"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="cambiarEstadoCita(cita, $event)"
+                        [disabled]="estadosCambiando.has(cita.id)"
+                        [attr.aria-label]="'Cambiar estado de la cita de ' + (cita.mascota?.nombre || 'la mascota')">
+                  <option *ngIf="cita.estado && !estadosActivos.includes(cita.estado)" [ngValue]="cita.estado">{{ cita.estado }} (histórico)</option>
+                  <option *ngFor="let etapa of etapasFlujo" [ngValue]="etapa.estadoCita" [disabled]="!etapa.activa">{{ etapa.nombre }}</option>
+                </select>
+              </td>
+              <td>
+                <button class="action-link" type="button" (click)="editar(cita)">Editar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      </ng-container>
+ 
+      <div class="fixed inset-0 z-50 bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+           *ngIf="formularioAbierto" (click)="cerrar()">
+        <aside class="panel h-full w-full max-w-xl overflow-y-auto p-5 shadow-2xl sm:p-6" (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">Recepcion</p>
+              <h2 class="section-title">{{ editandoId ? 'Editar cita' : 'Nueva cita' }}</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Agenda una atencion con datos reales de mascotas y veterinarios.</p>
+            </div>
+            <button class="boton-icono" type="button" (click)="cerrar()" aria-label="Cerrar"><app-icono name="x" [size]="18"></app-icono></button>
+          </div>
+          <form class="mt-5 grid gap-4" (ngSubmit)="guardar()">
+            <label class="grid gap-2" for="agendar-cita-fechaHora"><span class="form-label">Fecha y hora</span><input id="agendar-cita-fechaHora" class="campo" type="datetime-local" name="fechaHora" [(ngModel)]="form.fechaHora" required></label>
+            <label class="grid gap-2" for="agendar-cita-mascotaId"><span class="form-label">Mascota</span><select id="agendar-cita-mascotaId" class="campo" name="mascotaId" [(ngModel)]="form.mascotaId" required><option [ngValue]="null">Seleccionar</option><option *ngFor="let m of mascotas" [ngValue]="m.id">{{ m.nombre }} - {{ m.propietario?.nombres }}</option></select></label>
+            <label class="grid gap-2" for="agendar-cita-veterinarioId"><span class="form-label">Veterinario</span><select id="agendar-cita-veterinarioId" class="campo" name="veterinarioId" [(ngModel)]="form.veterinarioId" required><option [ngValue]="null">Seleccionar</option><option *ngFor="let v of veterinarios" [ngValue]="v.id">{{ v.nombres }} {{ v.apellidos }} - {{ v.especialidad }}</option></select></label>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="agendar-cita-motivo"><span class="form-label">Motivo</span><input id="agendar-cita-motivo" class="campo" name="motivo" [(ngModel)]="form.motivo" required></label>
+              <label class="grid gap-2" for="agendar-cita-estado"><span class="form-label">Etapa de la cita</span><select id="agendar-cita-estado" class="campo" name="estado" [(ngModel)]="form.estado" required><option *ngIf="form.estado && !estadosActivos.includes(form.estado)" [ngValue]="form.estado">{{ form.estado }} (estado actual)</option><option *ngFor="let etapa of etapasFlujo" [ngValue]="etapa.estadoCita" [disabled]="!etapa.activa">{{ etapa.nombre }} ({{ etapa.estadoCita }})</option></select></label>
+            </div>
+            <label class="grid gap-2" for="agendar-cita-observaciones"><span class="form-label">Observaciones</span><textarea id="agendar-cita-observaciones" class="campo min-h-24" name="observaciones" [(ngModel)]="form.observaciones"></textarea></label>
+            <button class="boton-primario w-full" type="submit">{{ editandoId ? 'Actualizar cita' : 'Guardar cita' }}</button>
+            <p class="text-sm font-bold text-emerald-700 dark:text-emerald-300" *ngIf="mensaje">{{ mensaje }}</p>
+          </form>
+        </aside>
+      </div>
+
+      <div class="fixed inset-0 z-[60] bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+           *ngIf="editorFlujoAbierto" (click)="editorFlujoAbierto = false">
+        <aside class="panel h-full w-full max-w-xl overflow-y-auto p-5 shadow-2xl sm:p-6" (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">Configuración de recepción</p>
+              <h2 class="section-title">{{ etapaEditandoId ? 'Editar etapa' : 'Crear etapa' }}</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">El estado asociado aparece en las citas que avanzan a esta etapa.</p>
+            </div>
+            <button class="boton-icono" type="button" (click)="editorFlujoAbierto = false" aria-label="Cerrar"><app-icono name="x" [size]="18"></app-icono></button>
+          </div>
+          <form class="mt-6 grid gap-4" (ngSubmit)="guardarEtapa()">
+            <label class="grid gap-2"><span class="form-label">Nombre visible de la etapa</span><input class="campo" name="etapaNombre" [(ngModel)]="etapaForm.nombre" maxlength="60" placeholder="Ej. Evaluación inicial" required></label>
+            <label class="grid gap-2"><span class="form-label">Estado asociado a la cita</span><input class="campo" name="etapaEstado" [(ngModel)]="etapaForm.estadoCita" maxlength="60" placeholder="Ej. En triage" required><span class="text-xs text-slate-500">Si cambias el estado asociado, las citas existentes también se actualizan.</span></label>
+            <label class="grid gap-2"><span class="form-label">Descripción</span><textarea class="campo min-h-24" name="etapaDescripcion" [(ngModel)]="etapaForm.descripcion" maxlength="180" placeholder="Qué debe ocurrir en esta etapa"></textarea></label>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2"><span class="form-label">Color</span><select class="campo" name="etapaColor" [(ngModel)]="etapaForm.color"><option *ngFor="let color of coloresFlujo" [ngValue]="color">{{ color | titlecase }}</option></select></label>
+              <label class="grid gap-2"><span class="form-label">Posición</span><input class="campo" type="number" name="etapaPosicion" [(ngModel)]="etapaForm.posicion" min="1" max="50" required></label>
+            </div>
+            <label class="flex items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm font-bold dark:border-slate-700"><input type="checkbox" name="etapaActiva" [(ngModel)]="etapaForm.activa"> Disponible para asignar a las citas</label>
+            <p class="text-sm font-bold text-rose-600" *ngIf="mensaje">{{ mensaje }}</p>
+            <button class="boton-primario w-full" type="submit" [disabled]="etapaGuardando">{{ etapaGuardando ? 'Guardando…' : (etapaEditandoId ? 'Guardar cambios' : 'Crear etapa') }}</button>
+          </form>
+        </aside>
+      </div>
+    </section>

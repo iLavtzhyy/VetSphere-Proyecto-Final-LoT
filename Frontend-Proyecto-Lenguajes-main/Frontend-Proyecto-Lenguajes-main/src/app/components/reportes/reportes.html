@@ -1,0 +1,303 @@
+<section class="facturacion-page">
+  <div class="facturacion-hero">
+    <div>
+      <p class="facturacion-eyebrow">Centro documental</p>
+      <h1>Historiales Clínicos</h1>
+      <p>Revisa la ficha médica, consultas, vacunas, cirugías y descarga/imprime el reporte de salud de cada mascota.</p>
+    </div>
+  </div>
+
+  <app-cargador *ngIf="cargando"></app-cargador>
+
+  <ng-container *ngIf="!cargando">
+  <div class="facturacion-stats">
+    <article class="factura-stat factura-stat-total">
+      <span>Pacientes totales</span>
+      <strong>{{ mascotas.length }}</strong>
+      <small>Mascotas registradas</small>
+    </article>
+    <article class="factura-stat">
+      <span>Registros clínicos</span>
+      <strong>{{ totalEventosClinicos }}</strong>
+      <small>En historiales de pacientes</small>
+    </article>
+    <article class="factura-stat factura-stat-pendiente">
+      <span>Cirugías</span>
+      <strong>{{ cirugiasRegistradas.length }}</strong>
+      <small>Registradas en el sistema</small>
+    </article>
+  </div>
+
+  <div class="facturacion-grid">
+    <section class="facturas-panel">
+      <div class="facturas-panel-header">
+        <div>
+          <p class="facturacion-eyebrow">Pacientes</p>
+          <h2>Listado de Mascotas</h2>
+        </div>
+        <label class="sr-only" for="reportes-busqueda">Buscar mascota</label>
+        <input id="reportes-busqueda" class="campo" style="max-width: 280px; padding: 0.5rem;" placeholder="Buscar mascota..." [(ngModel)]="busqueda">
+      </div>
+
+      <div class="facturas-table-wrap">
+        <table class="facturas-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Especie / Raza</th>
+              <th>Sexo</th>
+              <th>Propietario</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of filtradas" [class.fila-seleccionada]="mascotaSeleccionada?.id === m.id">
+              <td>
+                <button class="factura-numero" type="button" (click)="seleccionar(m)">
+                  {{ m.nombre }}
+                </button>
+                <small>HC-{{ m.id }}</small>
+              </td>
+              <td>{{ m.especie }} - {{ m.raza }}</td>
+              <td>{{ m.sexo }}</td>
+              <td>{{ m.propietario?.nombres }} {{ m.propietario?.apellidos }}</td>
+              <td>
+                <span class="badge" [ngClass]="m.estado === 'ACTIVA' ? 'badge-ok' : 'badge-info'">
+                  {{ m.estado }}
+                </span>
+              </td>
+              <td>
+                <div class="acciones-factura">
+                  <button class="accion-boton" type="button" title="Ver historial" (click)="seleccionar(m)">
+                    <app-icono name="eye" [size]="16"></app-icono>
+                  </button>
+                  <button class="accion-boton" type="button" title="Imprimir reporte" (click)="imprimirHistorial(m)">
+                    <app-icono name="printer" [size]="16"></app-icono>
+                  </button>
+                  <button class="accion-boton accion-descargar" type="button" title="Descargar PDF" (click)="descargarPdf(m)">
+                    <app-icono name="download" [size]="16"></app-icono>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside class="resumen-panel">
+      <p class="facturacion-eyebrow">Vista rápida de historial</p>
+      <h2>{{ mascotaSeleccionada ? 'Paciente seleccionado' : 'Selecciona una mascota' }}</h2>
+      <p class="resumen-texto" *ngIf="!mascotaSeleccionada">
+        Elige un paciente del listado para revisar su historial médico y opciones documentales.
+      </p>
+
+      <div class="mini-comprobante" *ngIf="mascotaSeleccionada as mascota">
+        <div class="mini-comprobante-top">
+          <span style="font-size: 1.25rem;">{{ mascota.nombre.slice(0, 2).toUpperCase() }}</span>
+          <div>
+            <strong>{{ mascota.nombre }}</strong>
+            <small>Propietario: {{ mascota.propietario?.nombres }}</small>
+          </div>
+        </div>
+        <dl>
+          <div><dt>Especie</dt><dd>{{ mascota.especie }}</dd></div>
+          <div><dt>Raza</dt><dd>{{ mascota.raza }}</dd></div>
+          <div><dt>Peso</dt><dd>{{ mascota.pesoKg }} kg</dd></div>
+          <div><dt>Sexo</dt><dd>{{ mascota.sexo }}</dd></div>
+          <div><dt>Consultas</dt><dd>{{ mascota.historiales?.length || 0 }} registradas</dd></div>
+        </dl>
+        <div class="mini-actions" style="margin-top: 1rem;">
+          <button class="boton-secundario" type="button" (click)="imprimirHistorial(mascota)">
+            <app-icono name="printer" [size]="16"></app-icono>
+            Imprimir
+          </button>
+          <button class="boton-primario" type="button" (click)="descargarPdf(mascota)">
+            <app-icono name="download" [size]="16"></app-icono>
+            Descargar PDF
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+  </ng-container>
+
+  <!-- Modal Reporte Historial Clinico Completo -->
+  <div class="modal-comprobante" *ngIf="mascotaSeleccionada as mascota" (click)="cerrarVistaPrevia()">
+    <section class="comprobante-card" (click)="$event.stopPropagation()">
+      <header class="comprobante-header">
+        <div class="comprobante-brand">
+          <span>VS</span>
+          <div>
+            <h2>VetSphere</h2>
+            <p>Reporte médico oficial del paciente</p>
+          </div>
+        </div>
+        <button class="boton-icono" type="button" aria-label="Cerrar" (click)="cerrarVistaPrevia()">
+          <app-icono name="x" [size]="18"></app-icono>
+        </button>
+      </header>
+
+      <div class="comprobante-body" style="padding: 1.5rem;">
+        <div class="comprobante-title">
+          <div>
+            <p>Historial Clínico del Paciente</p>
+            <h3>{{ mascota.nombre }}</h3>
+          </div>
+          <span class="estado-pagado">Código: HC-{{ mascota.id }}</span>
+        </div>
+
+        <div class="comprobante-info">
+          <article><span>Propietario</span><strong>{{ mascota.propietario?.nombres }} {{ mascota.propietario?.apellidos }}</strong></article>
+          <article><span>Especie / Raza</span><strong>{{ mascota.especie }} - {{ mascota.raza }}</strong></article>
+          <article><span>Peso / Sexo</span><strong>{{ mascota.pesoKg }} kg - {{ mascota.sexo }}</strong></article>
+        </div>
+
+        <!-- Consultas Table -->
+        <div style="margin-top: 1.5rem;">
+          <h4 style="font-weight: 900; color: var(--factura-primary); margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.8rem;">Consultas & Chequeos Preventivos</h4>
+          <div class="facturas-table-wrap" style="border: 1px solid var(--factura-border); border-radius: 0.5rem;">
+            <table class="facturas-table" style="min-width: 100%;">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Motivo</th>
+                  <th>Diagnóstico & Tratamiento</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let h of mascota.historiales">
+                  <td>{{ h.fecha | date:'dd/MM/yyyy' }}</td>
+                  <td><span class="badge badge-info">{{ h.tipoEvento || 'Consulta' }}</span></td>
+                  <td>{{ h.motivo }}</td>
+                  <td>
+                    <strong>Dx:</strong> {{ h.diagnostico }}<br>
+                    <strong>Tx:</strong> {{ h.tratamiento }}
+                  </td>
+                </tr>
+                <tr *ngIf="!mascota.historiales || mascota.historiales.length === 0">
+                  <td colspan="4" style="text-align: center; color: var(--factura-muted);">No hay consultas registradas.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cirugias Table -->
+        <div style="margin-top: 1.5rem;">
+          <h4 style="font-weight: 900; color: var(--factura-primary); margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.8rem;">Cirugías & Intervenciones</h4>
+          <div class="facturas-table-wrap" style="border: 1px solid var(--factura-border); border-radius: 0.5rem;">
+            <table class="facturas-table" style="min-width: 100%;">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Procedimiento</th>
+                  <th>Cirujano</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of mascota.cirugias">
+                  <td>{{ c.fechaProgramada | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ c.procedimiento }}</td>
+                  <td>{{ c.cirujanoPrincipal }}</td>
+                  <td><span class="badge" [ngClass]="c.estado === 'FINALIZADA' ? 'badge-ok' : 'badge-warn'">{{ c.estado }}</span></td>
+                </tr>
+                <tr *ngIf="!mascota.cirugias || mascota.cirugias.length === 0">
+                  <td colspan="4" style="text-align: center; color: var(--factura-muted);">No hay cirugías registradas.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Laboratorios Table -->
+        <div style="margin-top: 1.5rem;">
+          <h4 style="font-weight: 900; color: var(--factura-primary); margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.8rem;">Órdenes de Laboratorio</h4>
+          <div class="facturas-table-wrap" style="border: 1px solid var(--factura-border); border-radius: 0.5rem;">
+            <table class="facturas-table" style="min-width: 100%;">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Prueba</th>
+                  <th>Resultado</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let o of obtenerLabsPaciente(mascota.id)">
+                  <td>{{ o.fecha | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ o.tipoPrueba }}</td>
+                  <td>{{ o.resultado || 'Sin resultado' }}</td>
+                  <td><span class="badge badge-info">{{ o.estado }}</span></td>
+                </tr>
+                <tr *ngIf="obtenerLabsPaciente(mascota.id).length === 0">
+                  <td colspan="4" style="text-align: center; color: var(--factura-muted);">No hay análisis de laboratorio.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Hospitalizaciones Table -->
+        <div style="margin-top: 1.5rem;">
+          <h4 style="font-weight: 900; color: var(--factura-primary); margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.8rem;">Hospitalizaciones & Cuidados</h4>
+          <div class="facturas-table-wrap" style="border: 1px solid var(--factura-border); border-radius: 0.5rem;">
+            <table class="facturas-table" style="min-width: 100%;">
+              <thead>
+                <tr>
+                  <th>Ingreso</th>
+                  <th>Alta</th>
+                  <th>Jaula</th>
+                  <th>Motivo</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let hp of obtenerHospPaciente(mascota.id)">
+                  <td>{{ hp.ingreso | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ hp.alta ? (hp.alta | date:'dd/MM/yyyy') : 'En curso' }}</td>
+                  <td>{{ hp.jaula }}</td>
+                  <td>{{ hp.motivo }}</td>
+                  <td><span class="badge badge-warn">{{ hp.estado }}</span></td>
+                </tr>
+                <tr *ngIf="obtenerHospPaciente(mascota.id).length === 0">
+                  <td colspan="5" style="text-align: center; color: var(--factura-muted);">No hay hospitalizaciones.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <footer class="comprobante-footer">
+        <p>Este reporte contiene la ficha de salud completa del paciente certificada y firmada digitalmente por VetSphere.</p>
+        <div>
+          <button class="boton-secundario" type="button" (click)="imprimirHistorial(mascota)">
+            <app-icono name="printer" [size]="16"></app-icono>
+            Imprimir
+          </button>
+          <button class="boton-primario" type="button" (click)="descargarPdf(mascota)">
+            <app-icono name="download" [size]="16"></app-icono>
+            Descargar PDF
+          </button>
+        </div>
+      </footer>
+    </section>
+  </div>
+
+  <!-- Other document downloads -->
+  <section class="documento-panel mt-4">
+    <div>
+      <p class="facturacion-eyebrow">Documento para gestión</p>
+      <h2>Exportar datos de inventario</h2>
+    </div>
+    <p>Descarga el inventario actual para adjuntarlo al informe administrativo.</p>
+    <button class="boton-primario" type="button" (click)="descargarExcel()">
+      <app-icono name="download" [size]="16"></app-icono>
+      Descargar Excel
+    </button>
+  </section>
+</section>

@@ -1,0 +1,66 @@
+    <section class="page-shell" @fadeInUp>
+      <div class="page-header">
+        <div>
+          <p class="page-eyebrow">Administracion</p>
+          <h1 class="page-title">Panel administrativo</h1>
+          <p class="page-subtitle">Indicadores, solicitudes pendientes, aprobacion de personal y control de usuarios.</p>
+        </div>
+        <button class="boton-primario" routerLink="/usuarios">Crear usuario</button>
+      </div>
+
+      <app-cargador *ngIf="cargando"></app-cargador>
+
+      <ng-container *ngIf="!cargando">
+      <div class="grid gap-5 md:grid-cols-4">
+        <article class="stat-card" *ngFor="let item of indicadores | keyvalue">
+          <p class="stat-label">{{ item.key }}</p>
+          <p class="stat-value">{{ item.value }}</p>
+          <p class="stat-note">Sistema</p>
+        </article>
+      </div>
+
+      <!-- Banner de Código de Acreditación -->
+      <div class="codigo-box">
+        <div class="codigo-info">
+          <h3 class="codigo-titulo">Código de Registro para Personal</h3>
+          <p class="codigo-desc">
+            Autorización temporal para registrar recepcionistas y veterinarios.
+          </p>
+        </div>
+        <div class="codigo-control">
+          <div class="codigo-badge" aria-live="polite" aria-label="Código de autorización">
+            {{ codigoRevelado ? (codigoPersonal || '------') : '••••••' }}
+          </div>
+          <button class="codigo-revelar" type="button" (click)="alternarCodigo()" [disabled]="!codigoPersonal" [attr.aria-pressed]="codigoRevelado">
+            {{ codigoRevelado ? 'Ocultar código' : 'Mostrar código' }}
+          </button>
+        </div>
+        <div class="codigo-tiempo"><span class="codigo-punto"></span><small>Se renueva en <b>{{ cuentaAtrasCodigo }} s</b></small></div>
+      </div>
+
+      <div class="table-wrap overflow-x-auto">
+        <div class="border-b border-slate-200 p-5 dark:border-slate-800">
+          <h2 class="section-title">Solicitudes pendientes</h2>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Recepcionistas y veterinarios quedan pendientes hasta que admin apruebe.</p>
+        </div>
+        <table class="data-table" *ngIf="solicitudes.length; else sinSolicitudes">
+          <thead><tr><th>Usuario</th><th>Email</th><th>Telefono</th><th>Rol</th><th>Accion</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let u of solicitudes">
+              <td class="font-black text-slate-950 dark:text-white">{{ u.nombres }} {{ u.apellidos }}</td>
+              <td>{{ u.email }}</td>
+              <td>{{ u.telefono }}</td>
+              <td><span class="badge badge-info">{{ u.roles.length ? u.roles[0].nombre : 'Sin rol' }}</span></td>
+              <td>
+                <div class="flex gap-2">
+                  <button class="boton-primario" (click)="aprobar(u.id)">Aprobar</button>
+                  <button class="boton-peligro" (click)="rechazar(u.id)">Rechazar</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <ng-template #sinSolicitudes><p class="p-5 text-sm text-slate-500 dark:text-slate-400">No hay solicitudes pendientes.</p></ng-template>
+      </div>
+      </ng-container>
+    </section>

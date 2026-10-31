@@ -1,0 +1,65 @@
+    <section class="page-shell" @fadeInUp>
+      <div class="page-header">
+        <div>
+          <p class="page-eyebrow">Equipo medico</p>
+          <h1 class="page-title">Veterinarios y especialistas</h1>
+          <p class="page-subtitle">Informacion profesional, especialidad, biografia y contacto del equipo clinico.</p>
+        </div>
+      </div>
+
+      <div *ngIf="mensaje" role="status" class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200">{{ mensaje }}</div>
+
+      <app-cargador *ngIf="cargando"></app-cargador>
+
+      <ng-container *ngIf="!cargando">
+      <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <article class="panel overflow-hidden" *ngFor="let vet of veterinarios">
+          <div class="relative h-64">
+            <img class="h-full w-full object-cover object-[center_24%]" [src]="vet.fotoUrl || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=700'" [alt]="'Retrato profesional de ' + vet.nombres + ' ' + vet.apellidos" loading="lazy">
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-5 text-white">
+              <p class="text-xs font-black uppercase text-cyan-100">{{ vet.especialidad }}</p>
+              <h2 class="mt-1 text-2xl font-black">{{ vet.nombres }} {{ vet.apellidos }}</h2>
+            </div>
+          </div>
+          <div class="p-5">
+            <p class="text-sm text-slate-500 dark:text-slate-400">Cedula profesional: <b class="text-slate-800 dark:text-slate-200">{{ vet.cedulaProfesional }}</b></p>
+            <p class="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">{{ vet.biografia }}</p>
+            <div class="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-300">
+              {{ vet.email }} - {{ vet.telefono }}
+            </div>
+            <button class="boton-secundario mt-4 w-full" type="button" *ngIf="puedeEditar()" (click)="editar(vet)">
+              <app-icono name="file" [size]="16"></app-icono>
+              Editar informacion
+            </button>
+          </div>
+        </article>
+      </div>
+      </ng-container>
+
+      <div class="fixed inset-0 z-50 bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+           *ngIf="editando" (click)="cerrar()">
+        <aside class="panel h-full w-full max-w-xl overflow-y-auto p-5 shadow-2xl sm:p-6" (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">Equipo medico</p>
+              <h2 class="section-title">Editar veterinario</h2>
+            </div>
+            <button class="boton-icono" type="button" (click)="cerrar()"><app-icono name="x" [size]="18"></app-icono></button>
+          </div>
+          <form class="mt-5 grid gap-4" (ngSubmit)="guardar()" *ngIf="editando as form">
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="veterinarios-nombres"><span class="form-label">Nombres</span><input id="veterinarios-nombres" class="campo" name="nombres" [(ngModel)]="form.nombres"></label>
+              <label class="grid gap-2" for="veterinarios-apellidos"><span class="form-label">Apellidos</span><input id="veterinarios-apellidos" class="campo" name="apellidos" [(ngModel)]="form.apellidos"></label>
+            </div>
+            <label class="grid gap-2" for="veterinarios-fotoUrl"><span class="form-label">Foto URL</span><input id="veterinarios-fotoUrl" class="campo" name="fotoUrl" [(ngModel)]="form.fotoUrl"></label>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="veterinarios-telefono"><span class="form-label">Telefono</span><input id="veterinarios-telefono" class="campo" name="telefono" [(ngModel)]="form.telefono"></label>
+              <label class="grid gap-2" for="veterinarios-especialidad"><span class="form-label">Especialidad</span><input id="veterinarios-especialidad" class="campo" name="especialidad" [(ngModel)]="form.especialidad"></label>
+            </div>
+            <label class="grid gap-2" for="veterinarios-cedulaProfesional"><span class="form-label">Cedula profesional</span><input id="veterinarios-cedulaProfesional" class="campo" name="cedulaProfesional" [(ngModel)]="form.cedulaProfesional"></label>
+            <label class="grid gap-2" for="veterinarios-biografia"><span class="form-label">Biografia</span><textarea id="veterinarios-biografia" class="campo min-h-28" name="biografia" [(ngModel)]="form.biografia"></textarea></label>
+            <button class="boton-primario w-full" type="submit">Guardar cambios</button>
+          </form>
+        </aside>
+      </div>
+    </section>

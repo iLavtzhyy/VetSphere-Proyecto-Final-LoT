@@ -1,0 +1,13 @@
+/* =========================================================
+   VetSphere - Reactivar cuenta: estados de la pantalla
+   ========================================================= */
+
+:host {
+  display: block;
+}
+
+/* El codigo de 6 digitos se centra y con espaciado amplio para leerlo bien. */
+input[inputmode='numeric'] {
+  letter-spacing: 0.35rem;
+  font-variant-numeric: tabular-nums;
+}

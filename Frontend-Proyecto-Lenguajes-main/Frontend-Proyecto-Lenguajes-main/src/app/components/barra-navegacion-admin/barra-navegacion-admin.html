@@ -1,0 +1,78 @@
+    <div class="min-h-screen bg-[#f4f8ff] text-slate-950 dark:bg-[#07111f] dark:text-slate-50">
+      <div *ngIf="menuAbierto" class="fixed inset-0 z-20 bg-slate-950/50 backdrop-blur-sm lg:hidden" (click)="menuAbierto = false"></div>
+
+      <aside class="sidebar-panel fixed inset-y-0 left-0 z-30 flex w-72 flex-col border-r border-slate-200 bg-white/95 text-slate-600 shadow-xl shadow-slate-950/5 backdrop-blur transition-transform duration-200 dark:border-slate-800 dark:bg-[#0b1422]/95 dark:text-slate-300 lg:translate-x-0"
+        [ngClass]="menuAbierto ? 'translate-x-0' : '-translate-x-full'">
+        <div class="flex h-20 items-center gap-3 border-b border-slate-100 px-5 dark:border-slate-800">
+          <img class="h-12 w-12 rounded-lg bg-white object-contain p-1 ring-1 ring-slate-200 dark:ring-slate-700" src="assets/logo-vetsphere-icon.png" alt="VetSphere">
+          <div class="min-w-0">
+            <p class="truncate text-base font-black tracking-wide text-slate-950 dark:text-white">VetSphere</p>
+            <p class="truncate text-xs font-bold text-cyan-700 dark:text-cyan-300">Clinica veterinaria integral</p>
+          </div>
+        </div>
+
+        <nav class="sidebar-scroll flex-1 space-y-6 overflow-y-auto px-4 py-5 pr-3 text-sm">
+          <div *ngFor="let grupo of gruposVisibles; trackBy: trackGrupo">
+            <p class="px-3 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">{{ grupo.titulo }}</p>
+            <div class="space-y-1">
+              <a *ngFor="let item of grupo.items; trackBy: trackItem"
+                 class="item"
+                 [routerLink]="item.ruta || null"
+                 routerLinkActive="activo"
+                 (click)="cerrarMenu()">
+                <span class="item-icon"><app-icono [name]="item.icono" [size]="18"></app-icono></span>
+                <span class="truncate">{{ item.nombre }}</span>
+              </a>
+            </div>
+          </div>
+        </nav>
+
+        <div class="sidebar-session border-t border-slate-100 p-4 dark:border-slate-800">
+          <div class="rounded-lg border border-cyan-100 bg-cyan-50 p-4 dark:border-cyan-900/60 dark:bg-cyan-950/30">
+            <p class="text-xs font-black uppercase text-cyan-700 dark:text-cyan-300">Sesion activa</p>
+            <p class="mt-1 text-sm font-black text-slate-950 dark:text-white">{{ nombreSesion }}</p>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ rolesSesion }}</p>
+          </div>
+        </div>
+      </aside>
+
+      <main class="min-h-screen lg:ml-72">
+        <header class="sticky top-0 z-10 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-[#07111f]/90 sm:px-6 lg:px-8">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-3">
+              <button class="boton-icono lg:hidden" type="button" (click)="menuAbierto = true" aria-label="Abrir menu">
+                <app-icono name="menu" [size]="22"></app-icono>
+              </button>
+              <div class="min-w-0">
+                <p class="hidden text-xs font-black uppercase tracking-wide text-cyan-700 dark:text-cyan-300 sm:block">Operacion clinica</p>
+                <h1 class="truncate text-base font-black text-slate-950 dark:text-white sm:text-xl">Centro de control VetSphere</h1>
+              </div>
+            </div>
+            <div class="flex shrink-0 items-center gap-2">
+              <a class="hidden items-center gap-2 rounded-lg bg-emerald-50 px-4 py-2.5 text-sm font-black text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 sm:inline-flex" href="https://wa.me/593989188046?text=Hola%20VetSphere%2C%20necesito%20ayuda%20con%20una%20consulta%20veterinaria." target="_blank">
+                <app-icono name="whatsapp" [size]="18"></app-icono>
+                WhatsApp
+              </a>
+              <button class="boton-secundario px-3 sm:px-4" type="button" (click)="theme.alternar()">
+                <app-icono [name]="theme.oscuro() ? 'sun' : 'moon'" [size]="17"></app-icono>
+                <span class="hidden sm:inline">{{ theme.oscuro() ? 'Tema claro' : 'Tema oscuro' }}</span>
+              </button>
+              <button class="boton-secundario px-3 sm:px-4" type="button" (click)="salir()">Salir</button>
+            </div>
+          </div>
+        </header>
+        <nav class="compact-navigation" aria-label="Navegación principal">
+          <div *ngFor="let grupo of gruposVisibles; trackBy: trackGrupo" class="compact-navigation-group">
+            <span class="compact-navigation-label">{{ grupo.titulo }}</span>
+            <a *ngFor="let item of grupo.items; trackBy: trackItem" [routerLink]="item.ruta" routerLinkActive="compact-active" (click)="cerrarMenu()">
+              <app-icono [name]="item.icono" [size]="16"></app-icono><span>{{ item.nombre }}</span>
+            </a>
+          </div>
+        </nav>
+        <section class="p-4 sm:p-6 lg:p-8"><router-outlet></router-outlet></section>
+      </main>
+
+      <!-- Toasts y asistente LLM flotante en todas las pantallas autenticadas -->
+      <app-notificaciones></app-notificaciones>
+      <app-chatbot></app-chatbot>
+    </div>

@@ -1,0 +1,97 @@
+{
+    "proyecto": "Calidad De Software Proyecto",
+    "ruta": "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto",
+    "fecha": "2026-10-08T09:23:04.261568",
+    "estandar_referencia": "ISO/IEC 25010",
+    "lenguajes": {
+        "HTML": 26,
+        "JSON": 11,
+        "Python": 1,
+        "XML": 28,
+        "Java": 109,
+        "SQL": 2,
+        "JavaScript": 1,
+        "TypeScript": 56,
+        "CSS": 23
+    },
+    "codigo": {
+        "archivos": 246,
+        "lineas_totales": 30062,
+        "lineas_codigo": 28070,
+        "lineas_comentarios": 168,
+        "funciones_aproximadas": 663,
+        "clases_aproximadas": 135
+    },
+    "complejidad": {
+        "complejidad_ciclomatica_aproximada": 1389,
+        "decisiones": 1388
+    },
+    "seguridad": [],
+    "dependencias": [
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Backend-Proyecto-Lenguajes-main\\Backend-Proyecto-Lenguajes-main\\pom.xml",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\package.json",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\MiniProyecto-SOAP-master\\MiniProyecto-SOAP-master\\pom.xml"
+    ],
+    "tests_detectados": [
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\test_calidad_sistema.py",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Backend-Proyecto-Lenguajes-main\\Backend-Proyecto-Lenguajes-main\\src\\main\\java\\com\\VetSphere\\Backend\\modules\\clinic\\controller\\EspecialidadController.java",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Backend-Proyecto-Lenguajes-main\\Backend-Proyecto-Lenguajes-main\\target\\classes\\com\\VetSphere\\Backend\\modules\\clinic\\controller\\EspecialidadController.class",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\tsconfig.spec.json",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\test-types.d.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\app.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\administracion\\administracion.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\agendar-cita\\agendar-cita.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\barra-navegacion-admin\\barra-navegacion-admin.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\cirugias\\cirugias.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\clientes\\clientes.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\consultas\\consultas.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\dashboard\\dashboard.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\documentacion\\documentacion.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\facturacion\\facturacion.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\farmacia\\farmacia.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\hospitalizacion\\hospitalizacion.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\inicio\\inicio.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\laboratorio\\laboratorio.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\login\\login.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\mascotas\\mascotas.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\registro\\registro.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\reportes\\reportes.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\usuarios\\usuarios.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\verificar-codigo\\verificar-codigo.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\components\\veterinarios\\veterinarios.spec.ts",
+        "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\Frontend-Proyecto-Lenguajes-main\\Frontend-Proyecto-Lenguajes-main\\src\\app\\shared\\components\\icono\\icono.spec.ts"
+    ],
+    "tests": [
+        {
+            "archivo": "C:\\Users\\ESTUDIANTE\\Downloads\\Calidad De Software Proyecto\\test_calidad_sistema.py",
+            "exitoso": true,
+            "tiempo_ms": 39.2,
+            "salida": "[OK] Estructura de arquitectura\n[OK] Integridad Backend Spring Boot\n[OK] Integridad Frontend Angular\n[OK] Integridad Servicio SOAP CXF\nTodas las pruebas del sistema finalizaron exitosamente.\n",
+            "error": ""
+        }
+    ],
+    "rendimiento": {
+        "tiempo_analisis_ms": 10.3,
+        "datos_analizados_mb": 1.13,
+        "velocidad_lectura_mb_s": 109.75
+    },
+    "portabilidad": {
+        "sistema_operativo": "Windows",
+        "version_sistema": "10.0.26200",
+        "arquitectura": "AMD64",
+        "python": "3.14.7"
+    },
+    "calidad": {
+        "funcionalidad": 100.0,
+        "fiabilidad": 100.0,
+        "rendimiento": 100,
+        "seguridad": 100,
+        "mantenibilidad": 60.0,
+        "usabilidad": 100,
+        "portabilidad": 100,
+        "calidad_global": 94.0,
+        "densidad_hallazgos_seguridad": 0.0,
+        "complejidad_media": 2.1,
+        "duplicacion_lineas": 4398
+    }
+}

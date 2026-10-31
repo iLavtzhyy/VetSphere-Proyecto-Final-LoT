@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Esquema del servicio SOAP de productos de VetSphere.
+    El targetNamespace coincide con el declarado en ProductoSoapEndpoint/ProductoSoapService
+    (https://soap.vetsphere.com/productos). Todas las peticiones requieren un
+    wsse:Security con UsernameToken (ver CxfSoapConfig y los ejemplos en src/test/resources/soap-requests).
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="https://soap.vetsphere.com/productos"
+           xmlns:tns="https://soap.vetsphere.com/productos"
+           elementFormDefault="qualified">
+    <xs:element name="consultarProducto">
+        <xs:complexType><xs:sequence><xs:element name="codigo" type="xs:string"/></xs:sequence></xs:complexType>
+    </xs:element>
+    <xs:element name="agregarStock">
+        <xs:complexType><xs:sequence><xs:element name="codigo" type="xs:string"/><xs:element name="cantidad" type="xs:int"/></xs:sequence></xs:complexType>
+    </xs:element>
+    <xs:element name="descontarStock">
+        <xs:complexType><xs:sequence><xs:element name="codigo" type="xs:string"/><xs:element name="cantidad" type="xs:int"/></xs:sequence></xs:complexType>
+    </xs:element>
+    <xs:element name="actualizarStock">
+        <xs:complexType><xs:sequence><xs:element name="codigo" type="xs:string"/><xs:element name="stock" type="xs:int"/></xs:sequence></xs:complexType>
+    </xs:element>
+    <xs:element name="stockCritico">
+        <xs:complexType><xs:sequence/></xs:complexType>
+    </xs:element>
+    <xs:complexType name="ProductoSoapResponse">
+        <xs:sequence>
+            <xs:element name="codigo" type="xs:string"/>
+            <xs:element name="nombre" type="xs:string"/>
+            <xs:element name="categoria" type="xs:string"/>
+            <xs:element name="stock" type="xs:int"/>
+            <xs:element name="stockCritico" type="xs:int"/>
+            <xs:element name="precio" type="xs:decimal"/>
+            <xs:element name="prioridadAlta" type="xs:boolean"/>
+            <xs:element name="critico" type="xs:boolean"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="StockUpdateResponse">
+        <xs:sequence>
+            <xs:element name="codigo" type="xs:string"/>
+            <xs:element name="stock" type="xs:int"/>
+            <xs:element name="mensaje" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

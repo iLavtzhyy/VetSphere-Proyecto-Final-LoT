@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.angular/
+.pnpm-store/
+*.log
+ng-serve.log
+ng-serve.err.log
+.idea/
+.vscode/

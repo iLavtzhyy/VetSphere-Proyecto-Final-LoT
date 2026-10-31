@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VetSphere - Terminal SOAP de Transferencia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient-start: #0b1523;
+            --bg-gradient-end: #050a11;
+            --panel-bg: rgba(16, 27, 43, 0.75);
+            --panel-border: rgba(43, 62, 88, 0.4);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #06b6d4;
+            --accent-cyan-hover: #0891b2;
+            --accent-emerald: #10b981;
+            --accent-emerald-hover: #059669;
+            --accent-rose: #f43f5e;
+            --accent-rose-hover: #e11d48;
+            --shadow-glow: rgba(6, 182, 212, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2.5rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            max-width: 700px;
+        }
+
+        .eyebrow {
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 10px var(--shadow-glow);
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.2;
+            margin-bottom: 0.75rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        main {
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .dashboard-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 1.25rem;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .panel-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .btn-refresh {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--panel-border);
+            color: var(--text-primary);
+            padding: 0.6rem 1.2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-refresh:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        td {
+            padding: 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .code-badge {
+            font-family: monospace;
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--accent-cyan);
+            padding: 0.25rem 0.6rem;
+            border-radius: 0.375rem;
+            font-weight: 700;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+
+        .stock-value {
+            font-size: 1.15rem;
+            font-weight: 800;
+        }
+
+        .stock-local {
+            color: #ffffff;
+        }
+
+        .stock-remote {
+            color: var(--accent-cyan);
+        }
+
+        .stock-error {
+            color: var(--accent-rose);
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .transfer-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .input-qty {
+            width: 70px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--panel-border);
+            color: #ffffff;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            outline: none;
+            font-weight: 700;
+            text-align: center;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-qty:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .btn-action {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-send {
+            background: var(--accent-rose);
+            color: #ffffff;
+        }
+
+        .btn-send:hover {
+            background: var(--accent-rose-hover);
+            box-shadow: 0 0 12px rgba(244, 63, 94, 0.3);
+        }
+
+        .btn-receive {
+            background: var(--accent-emerald);
+            color: #ffffff;
+        }
+
+        .btn-receive:hover {
+            background: var(--accent-emerald-hover);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .alert-box {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .alert-error {
+            background: rgba(244, 63, 94, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        footer {
+            margin-top: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <p class="eyebrow">Terminal Remota SOAP</p>
+        <h1>VetSphere SOAP Stock Transfer</h1>
+        <p class="subtitle">Intercambia inventario en tiempo real entre la Base de Datos Local (Mini) y la Base de Datos Principal de VetSphere mediante llamadas SOAP encriptadas con WS-Security.</p>
+    </header>
+
+    <main>
+        <div class="dashboard-panel" id="acceso-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Acceso del operador</h2>
+            </div>
+            <p class="subtitle">Ingresa el token local de la API. Se conserva solo en memoria mientras esta página permanezca abierta.</p>
+            <form id="acceso-form" class="transfer-actions" style="margin-top: 1rem;">
+                <input id="api-token" class="input-qty" type="password" autocomplete="current-password" aria-label="Token de acceso" placeholder="Token de acceso" style="width: min(100%, 420px);">
+                <button class="btn-action btn-receive" type="submit">Conectar</button>
+            </form>
+        </div>
+        <div class="dashboard-panel">
+            <div id="alert" class="alert-box"></div>
+
+            <div class="panel-header">
+                <h2 class="panel-title">Medicamentos de la Terminal</h2>
+                <button class="btn-refresh" onclick="cargarProductos()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    Actualizar
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Descripción</th>
+                            <th>Stock Local (Mini DB)</th>
+                            <th>Stock Remoto (VetSphere DB)</th>
+                            <th>Acciones de Transferencia</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productos-tabla">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem;">Cargando productos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VetSphere. Funcionando en Puerto 8090.</p>
+    </footer>
+
+    <script>
+        const API_URL = '/api/stock';
+        let apiToken = '';
+
+        async function cargarProductos() {
+            if (!apiToken) return;
+            try {
+                const response = await fetch(`${API_URL}/productos`, { headers: { 'X-App-Token': apiToken } });
+                if (response.status === 401) apiToken = '';
+                if (!response.ok) throw new Error("No se pudieron obtener los productos.");
+                const productos = await response.json();
+                
+                const tbody = document.getElementById('productos-tabla');
+                tbody.innerHTML = '';
+
+                if (productos.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No hay productos locales.</td></tr>`;
+                    return;
+                }
+
+                productos.forEach(p => {
+                    const isRemoteErr = typeof p.stockRemoto === 'string';
+                    const codigo = escapeHtml(p.codigo);
+                    const nombre = escapeHtml(p.nombre);
+                    const stockLocal = escapeHtml(p.stockLocal);
+                    const stockRemoto = escapeHtml(p.stockRemoto);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><span class="code-badge">${codigo}</span></td>
+                        <td style="font-weight: 600;">${nombre}</td>
+                        <td><span class="stock-value stock-local">${stockLocal}</span></td>
+                        <td>
+                            <span class="stock-value ${isRemoteErr ? 'stock-error' : 'stock-remote'}">
+                                ${stockRemoto}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="transfer-actions">
+                                <input type="number" class="input-qty" id="qty-${codigo}" value="5" min="1">
+                                <button class="btn-action btn-send" data-codigo="${codigo}" data-direccion="enviar">
+                                    Enviar a VetSphere &rarr;
+                                </button>
+                                <button class="btn-action btn-receive" data-codigo="${codigo}" data-direccion="recibir">
+                                    &larr; Traer de VetSphere
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                mostrarAlerta(err.message, 'error');
+            }
+        }
+
+        async function transferir(codigo, direccion) {
+            const qtyInput = document.getElementById(`qty-${codigo}`);
+            const cantidad = parseInt(qtyInput.value);
+            
+            if (isNaN(cantidad) || cantidad <= 0) {
+                mostrarAlerta("Ingresa una cantidad válida mayor a 0", "error");
+                return;
+            }
+
+            mostrarAlerta("Procesando transferencia SOAP...", "success");
+
+            try {
+                const parametros = new URLSearchParams({ codigo, cantidad: String(cantidad), direccion });
+                const response = await fetch(`${API_URL}/transferir?${parametros}`, {
+                    method: 'POST',
+                    headers: { 'X-App-Token': apiToken }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarAlerta(data.mensaje, 'success');
+                    cargarProductos();
+                } else {
+                    mostrarAlerta(data.error || "Error al transferir.", 'error');
+                }
+            } catch (err) {
+                mostrarAlerta("Error de red o conexión al servidor.", 'error');
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[character]);
+        }
+
+        document.getElementById('acceso-form').addEventListener('submit', async event => {
+            event.preventDefault();
+            const token = document.getElementById('api-token').value;
+            if (token.length < 32) {
+                mostrarAlerta('El token debe tener al menos 32 caracteres.', 'error');
+                return;
+            }
+            apiToken = token;
+            try {
+                const response = await fetch(`${API_URL}/productos`, { headers: { 'X-App-Token': apiToken } });
+                if (!response.ok) throw new Error('Token no válido o API no disponible.');
+                document.getElementById('acceso-panel').style.display = 'none';
+                cargarProductos();
+            } catch (error) {
+                apiToken = '';
+                mostrarAlerta(error.message, 'error');
+            }
+        });
+
+        function mostrarAlerta(mensaje, tipo) {
+            const alert = document.getElementById('alert');
+            alert.textContent = mensaje;
+            alert.className = `alert-box alert-${tipo}`;
+            alert.style.display = 'block';
+            
+            if (tipo === 'success' && !mensaje.includes("Procesando")) {
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        document.getElementById('productos-tabla').addEventListener('click', event => {
+            const button = event.target.closest('button[data-codigo][data-direccion]');
+            if (button) transferir(button.dataset.codigo, button.dataset.direccion);
+        });
+
+        // Carga inicial
+    </script>
+</body>
+</html>

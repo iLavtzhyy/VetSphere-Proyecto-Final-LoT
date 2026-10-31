@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+TOKEN_ACCESO_LOCAL.txt
+target/
+data/*.mv.db
+data/*.trace.db
+*.log

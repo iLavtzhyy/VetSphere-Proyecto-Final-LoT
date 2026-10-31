@@ -1,0 +1,260 @@
+<section class="page-shell" @fadeInUp>
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Administracion</p>
+      <h1 class="page-title">Usuarios y solicitudes</h1>
+      <p class="page-subtitle">Administra administradores, recepcionistas, veterinarios, clientes y aprobaciones pendientes.</p>
+    </div>
+    <button class="boton-primario" type="button" (click)="nuevo()">
+      <app-icono name="users" [size]="18"></app-icono>
+      Crear usuario
+    </button>
+  </div>
+
+  <app-cargador *ngIf="cargando"></app-cargador>
+
+  <ng-container *ngIf="!cargando">
+  <div class="grid gap-4 md:grid-cols-4">
+    <article class="stat-card"><p class="stat-label">Usuarios</p><p class="stat-value">{{ usuarios.length }}</p><p class="stat-note">Registrados</p></article>
+    <article class="stat-card"><p class="stat-label">Veterinarios</p><p class="stat-value">{{ porRol('ROLE_VETERINARIO') }}</p><p class="stat-note">Equipo medico</p></article>
+    <article class="stat-card"><p class="stat-label">Recepcion</p><p class="stat-value">{{ porRol('ROLE_RECEPCIONISTA') }}</p><p class="stat-note">Admision</p></article>
+    <article class="stat-card"><p class="stat-label">Pendientes</p><p class="stat-value text-amber-700 dark:text-amber-300">{{ solicitudes.length }}</p><p class="stat-note">Por aprobar</p></article>
+  </div>
+
+  <div class="panel p-4">
+    <label class="sr-only" for="usuarios-busqueda">Buscar usuarios</label>
+    <input id="usuarios-busqueda" class="campo w-full" placeholder="Buscar por nombre, email, telefono o rol..." [(ngModel)]="busqueda">
+  </div>
+
+  <div class="table-wrap overflow-x-auto">
+    <div class="border-b border-slate-200 p-5 dark:border-slate-800">
+      <h2 class="section-title">Solicitudes pendientes</h2>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Cuando un recepcionista o veterinario se registra, aparece aqui para aprobarlo.</p>
+    </div>
+    <table class="data-table" *ngIf="solicitudes.length; else sinSolicitudes">
+      <thead><tr><th>Usuario</th><th>Email</th><th>Telefono</th><th>Rol</th><th>Accion</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let u of solicitudes">
+          <td class="font-black text-slate-950 dark:text-white">{{ u.nombres }} {{ u.apellidos }}</td>
+          <td>{{ u.email }}</td>
+          <td>{{ u.telefono }}</td>
+          <td><span class="badge badge-info">{{ rolPrincipal(u) }}</span></td>
+          <td><button class="boton-primario" type="button" (click)="aprobar(u.id)">Aprobar</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <ng-template #sinSolicitudes><p class="p-5 text-sm text-slate-500 dark:text-slate-400">No hay solicitudes pendientes.</p></ng-template>
+  </div>
+
+  <div class="table-wrap overflow-x-auto">
+    <div class="border-b border-slate-200 p-5 dark:border-slate-800" style="border-bottom: none;">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="section-title">Usuarios del sistema</h2>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Listado de cuentas y datos de contacto.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tabs de Roles -->
+    <div class="roles-tabs">
+      <button type="button" class="tab-boton" [class.tab-boton-activo]="rolSeleccionado === 'TODOS'" (click)="rolSeleccionado = 'TODOS'">
+        Todos ({{ usuarios.length }})
+      </button>
+      <button type="button" class="tab-boton" [class.tab-boton-activo]="rolSeleccionado === 'ROLE_ADMIN'" (click)="rolSeleccionado = 'ROLE_ADMIN'">
+        Administradores ({{ porRol('ROLE_ADMIN') }})
+      </button>
+      <button type="button" class="tab-boton" [class.tab-boton-activo]="rolSeleccionado === 'ROLE_RECEPCIONISTA'" (click)="rolSeleccionado = 'ROLE_RECEPCIONISTA'">
+        Recepcionistas ({{ porRol('ROLE_RECEPCIONISTA') }})
+      </button>
+      <button type="button" class="tab-boton" [class.tab-boton-activo]="rolSeleccionado === 'ROLE_VETERINARIO'" (click)="rolSeleccionado = 'ROLE_VETERINARIO'">
+        Veterinarios ({{ porRol('ROLE_VETERINARIO') }})
+      </button>
+      <button type="button" class="tab-boton" [class.tab-boton-activo]="rolSeleccionado === 'ROLE_CLIENTE'" (click)="rolSeleccionado = 'ROLE_CLIENTE'">
+        Clientes ({{ porRol('ROLE_CLIENTE') }})
+      </button>
+    </div>
+
+    <table class="data-table">
+      <thead><tr><th>Nombre</th><th>Email</th><th>Telefono</th><th>Rol</th><th>Especialidad</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let u of filtrados">
+          <td class="font-black text-slate-950 dark:text-white">{{ u.nombres }} {{ u.apellidos }}</td>
+          <td>{{ u.email }}</td>
+          <td>{{ u.telefono }}</td>
+          <td><span class="badge badge-info">{{ rolPrincipal(u) }}</span></td>
+          <td>{{ u.especialidad || 'Sin especialidad' }}</td>
+          <td>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="badge" [ngClass]="claseEstado(u)">{{ textoEstado(u) }}</span>
+              <span class="badge badge-info" *ngIf="u.emailVerificado === false">Correo sin verificar</span>
+              <span class="badge badge-warn" *ngIf="(u.intentosFallidos || 0) > 0">{{ u.intentosFallidos }} {{ (u.intentosFallidos || 0) === 1 ? 'intento fallido' : 'intentos fallidos' }}</span>
+            </div>
+            <p class="mt-1 text-xs text-slate-400" *ngIf="u.motivoBloqueo">Motivo: {{ u.motivoBloqueo }}</p>
+          </td>
+          <td>
+            <div class="relative inline-block text-left">
+              <button class="boton-secundario inline-flex items-center gap-1.5" style="min-h: 36px; padding: 0.25rem 0.75rem;" type="button" (click)="toggleMenu(u.id, $event); $event.stopPropagation()">
+                Opciones
+                <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div *ngIf="menuAbiertoId === u.id" [ngStyle]="menuEstilo" class="fixed w-52 origin-top-right rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-10 focus:outline-none dark:bg-slate-800 dark:ring-slate-700">
+                <div class="py-1">
+                  <button class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 font-bold" type="button" (click)="editar(u); toggleMenu(null)">
+                    Editar
+                  </button>
+                  <ng-container *ngIf="esAdmin">
+                    <button *ngIf="!bloqueoVigente(u)" class="block w-full text-left px-4 py-2 text-sm text-amber-700 hover:bg-slate-100 dark:text-amber-300 dark:hover:bg-slate-700 font-bold" type="button" (click)="abrirEstado('bloquear', u); toggleMenu(null)">
+                      Bloquear
+                    </button>
+                    <button *ngIf="bloqueoVigente(u)" class="block w-full text-left px-4 py-2 text-sm text-emerald-700 hover:bg-slate-100 dark:text-emerald-300 dark:hover:bg-slate-700 font-bold" type="button" (click)="abrirEstado('desbloquear', u); toggleMenu(null)">
+                      Desbloquear
+                    </button>
+                    <button *ngIf="u.activo !== false" class="block w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-100 dark:text-red-400 dark:hover:bg-slate-700 font-bold" type="button" (click)="abrirEstado('desactivar', u); toggleMenu(null)">
+                      Desactivar
+                    </button>
+                    <button *ngIf="u.activo === false" class="block w-full text-left px-4 py-2 text-sm text-emerald-700 hover:bg-slate-100 dark:text-emerald-300 dark:hover:bg-slate-700 font-bold" type="button" (click)="abrirEstado('reactivar', u); toggleMenu(null)">
+                      Reactivar
+                    </button>
+                  </ng-container>
+                  <button *ngIf="u.activo === false" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-100 dark:text-red-400 dark:hover:bg-slate-700 font-bold" type="button" (click)="eliminarUsuario(u.id); toggleMenu(null)">
+                    Eliminar permanentemente
+                  </button>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  </ng-container>
+
+  <div class="fixed inset-0 z-[70] grid place-items-center bg-slate-950/60 p-4 backdrop-blur-sm" *ngIf="usuarioEliminarPendiente" (click)="usuarioEliminarPendiente = null">
+    <section class="panel w-full max-w-lg p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="eliminar-usuario-titulo" (click)="$event.stopPropagation()">
+      <div class="flex items-start gap-4">
+        <div class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"><app-icono name="alert" [size]="21"></app-icono></div>
+        <div>
+          <h2 id="eliminar-usuario-titulo" class="text-xl font-black">Eliminar permanentemente</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{{ usuarioEliminarPendiente.nombres }} {{ usuarioEliminarPendiente.apellidos }} se eliminará definitivamente del sistema. Sus historiales, citas y comprobantes se conservarán sin datos de esta cuenta. Esta acción no se puede deshacer.</p>
+        </div>
+      </div>
+      <div class="mt-6 flex flex-col-reverse justify-end gap-3 sm:flex-row">
+        <button class="boton-secundario" type="button" (click)="usuarioEliminarPendiente = null" [disabled]="procesandoEliminacion">Cancelar</button>
+        <button class="boton-peligro" type="button" (click)="confirmarEliminarUsuario()" [disabled]="procesandoEliminacion">{{ procesandoEliminacion ? 'Procesando…' : 'Confirmar eliminación' }}</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="fixed inset-0 z-50 bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+       *ngIf="formularioAbierto"
+       (click)="cerrar()">
+    <aside class="panel h-full w-full max-w-xl overflow-y-auto p-5 shadow-2xl sm:p-6" (click)="$event.stopPropagation()">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="page-eyebrow">{{ esNuevo ? 'Nuevo usuario' : 'Editar usuario' }}</p>
+          <h2 class="section-title">Formulario de usuario</h2>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ esNuevo ? 'Crea usuarios internos con rol real del sistema.' : 'Edita la información del usuario seleccionado.' }}</p>
+        </div>
+        <button class="boton-icono" type="button" (click)="cerrar()" aria-label="Cerrar formulario"><app-icono name="x" [size]="18"></app-icono></button>
+      </div>
+
+      <form class="mt-5 grid gap-4" (ngSubmit)="guardar()">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="grid gap-2" for="usuarios-nombres"><span class="form-label">Nombres</span><input id="usuarios-nombres" class="campo" name="nombres" [(ngModel)]="form.nombres" required></label>
+          <label class="grid gap-2" for="usuarios-apellidos"><span class="form-label">Apellidos</span><input id="usuarios-apellidos" class="campo" name="apellidos" [(ngModel)]="form.apellidos" required></label>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="grid gap-2" for="usuarios-email"><span class="form-label">Email</span><input id="usuarios-email" class="campo" type="email" name="email" [(ngModel)]="form.email" required></label>
+          <label class="grid gap-2" for="usuarios-telefono"><span class="form-label">Telefono</span><input id="usuarios-telefono" class="campo" name="telefono" [(ngModel)]="form.telefono"></label>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="grid gap-2" for="usuarios-password">
+            <span class="form-label">{{ esNuevo ? 'Contraseña temporal' : 'Cambiar contraseña (opcional)' }}</span>
+            <input id="usuarios-password" class="campo" type="password" name="password" autocomplete="new-password" [(ngModel)]="form.password" placeholder="{{ esNuevo ? 'Mínimo 8 caracteres, mayúscula, minúscula y número' : 'Nueva contraseña (o dejar en blanco)' }}" [minlength]="form.password ? 8 : 0" maxlength="72" [required]="esNuevo" [pattern]="form.password ? '^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{8,72}$' : '.*'">
+            <small class="text-xs text-slate-500 dark:text-slate-400" *ngIf="!esNuevo">Déjala vacía para conservar la contraseña actual. Para cambiarla, usa al menos 8 caracteres con mayúscula, minúscula y número.</small>
+          </label>
+          <label class="grid gap-2" for="usuarios-rol">
+            <span class="form-label">Rol</span>
+            <select id="usuarios-rol" class="campo" name="rol" [(ngModel)]="rol">
+              <option>ROLE_ADMIN</option>
+              <option>ROLE_RECEPCIONISTA</option>
+              <option>ROLE_VETERINARIO</option>
+              <option>ROLE_CLIENTE</option>
+            </select>
+          </label>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2" *ngIf="!esNuevo">
+          <label class="grid gap-2" for="usuarios-activo">
+            <span class="form-label">Estado de Cuenta</span>
+            <select id="usuarios-activo" class="campo" name="activo" [(ngModel)]="form.activo">
+              <option [ngValue]="true">Activo</option>
+              <option [ngValue]="false">Inactivo</option>
+            </select>
+          </label>
+        </div>
+        <label class="grid gap-2" for="usuarios-fotoUrl"><span class="form-label">Foto URL</span><input id="usuarios-fotoUrl" class="campo" name="fotoUrl" [(ngModel)]="form.fotoUrl"></label>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="grid gap-2" for="usuarios-especialidad"><span class="form-label">Especialidad</span><input id="usuarios-especialidad" class="campo" name="especialidad" [(ngModel)]="form.especialidad"></label>
+          <label class="grid gap-2" for="usuarios-cedulaProfesional"><span class="form-label">Cedula profesional</span><input id="usuarios-cedulaProfesional" class="campo" name="cedulaProfesional" [(ngModel)]="form.cedulaProfesional"></label>
+        </div>
+        <label class="grid gap-2" for="usuarios-biografia"><span class="form-label">Biografia</span><textarea id="usuarios-biografia" class="campo min-h-28" name="biografia" [(ngModel)]="form.biografia"></textarea></label>
+        <button class="boton-primario w-full font-black" type="submit">{{ esNuevo ? 'Crear usuario' : 'Guardar cambios' }}</button>
+        <p class="text-sm font-bold text-emerald-700 dark:text-emerald-300" *ngIf="mensaje">{{ mensaje }}</p>
+      </form>
+    </aside>
+  </div>
+
+  <!-- Modal de estado de cuenta (solo administrador) -->
+  <div class="fixed inset-0 z-50 bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+       *ngIf="modalEstadoAbierto"
+       (click)="cerrarEstado()">
+    <aside class="panel h-full w-full max-w-xl overflow-y-auto p-5 shadow-2xl sm:p-6" (click)="$event.stopPropagation()">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="page-eyebrow">Estado de cuenta</p>
+          <h2 class="section-title">{{ tituloEstado }}</h2>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400" *ngIf="usuarioEstado">
+            {{ nombreCompleto(usuarioEstado) }} · {{ usuarioEstado.email }}
+          </p>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ descripcionEstado }}</p>
+        </div>
+        <button class="boton-icono" type="button" (click)="cerrarEstado()" aria-label="Cerrar formulario">
+          <app-icono name="x" [size]="18"></app-icono>
+        </button>
+      </div>
+
+      <form class="mt-5 grid gap-4" (ngSubmit)="confirmarEstado()">
+        <div class="soft-panel grid gap-2" *ngIf="muestraHoras">
+          <label class="grid gap-2" for="estado-horas">
+            <span class="form-label">Horas de bloqueo (1 a 720)</span>
+            <input id="estado-horas" class="campo" type="number" min="1" max="720" step="1" name="horas" [(ngModel)]="horasBloqueo" required>
+          </label>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Por defecto se bloquea 24 horas. El maximo es de 720 horas (30 dias).</p>
+        </div>
+
+        <div class="grid gap-2" *ngIf="modoEstado !== 'desbloquear'">
+          <label class="grid gap-2" for="estado-motivo">
+            <span class="form-label">Motivo {{ motivoObligatorio ? '(obligatorio)' : '(opcional)' }}</span>
+            <textarea id="estado-motivo" class="campo min-h-24" name="motivo" maxlength="300" [(ngModel)]="motivoEstado"
+                      [required]="motivoObligatorio" placeholder="Describe el motivo de la accion"></textarea>
+          </label>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Maximo 300 caracteres. Minimo 5 caracteres cuando es obligatorio.</p>
+        </div>
+
+        <div class="soft-panel text-sm text-slate-600 dark:text-slate-300" *ngIf="modoEstado === 'desbloquear'">
+          Se levantara el bloqueo vigente de la cuenta y podra volver a iniciar sesion de inmediato.
+        </div>
+
+        <p class="text-sm font-bold text-rose-600 dark:text-rose-300" *ngIf="errorEstado">{{ errorEstado }}</p>
+
+        <button class="w-full font-black" [ngClass]="claseBotonEstado" type="submit" [disabled]="procesandoEstado">
+          {{ procesandoEstado ? 'Procesando…' : textoBotonEstado }}
+        </button>
+      </form>
+    </aside>
+  </div>
+</section>

@@ -1,0 +1,11 @@
+<div class="pointer-events-none fixed right-4 top-20 z-[70] flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2" aria-live="polite" role="status">
+  @for (notificacion of servicio.notificaciones(); track notificacion.id) {
+    <div [class]="clases(notificacion)">
+      <app-icono [name]="icono(notificacion)" [size]="18"></app-icono>
+      <p class="min-w-0 flex-1">{{ notificacion.texto }}</p>
+      <button type="button" class="shrink-0 opacity-60 transition hover:opacity-100" (click)="servicio.cerrar(notificacion.id)" aria-label="Cerrar notificación">
+        <app-icono name="x" [size]="16"></app-icono>
+      </button>
+    </div>
+  }
+</div>

@@ -1,0 +1,155 @@
+<div class="space-y-6 pb-10">
+  <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#101b2b]">
+    <div class="flex flex-col gap-5 bg-gradient-to-r from-cyan-950 via-teal-900 to-cyan-800 p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-8">
+      <div>
+        <div class="mb-2 flex flex-wrap items-center gap-2">
+          <span class="rounded-full bg-white/15 px-3 py-1 text-[11px] font-black uppercase tracking-wider">Módulo de administrador</span>
+          <span class="rounded-full bg-amber-300 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-amber-950">DATOS SIMULADOS</span>
+        </div>
+        <h2 class="text-2xl font-black sm:text-3xl">Cadena de frío IoT</h2>
+        <p class="mt-2 max-w-2xl text-sm text-cyan-50/90">Temperatura, sensores, alertas y trazabilidad de medicamentos que requieren refrigeración.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-xs font-bold">
+          <span class="h-2 w-2 rounded-full" [ngClass]="conectada ? 'bg-emerald-300' : 'bg-slate-300'"></span>
+          {{ conectada ? 'En vivo' : 'Reconectando' }}
+        </span>
+        <button class="rounded-xl bg-white px-4 py-2.5 text-sm font-black text-cyan-900 hover:bg-cyan-50" type="button" (click)="refrescar()" [disabled]="cargando">Actualizar</button>
+      </div>
+    </div>
+    <div class="grid gap-3 border-t border-white/10 bg-white p-4 text-xs text-slate-600 dark:bg-[#101b2b] dark:text-slate-300 sm:grid-cols-3 sm:px-8">
+      <span>Las lecturas se identifican como <b>SIMULADAS</b> o <b>DISPOSITIVO</b>.</span>
+      <span>Rango configurable por nevera; predeterminado: 2–8 °C.</span>
+      <span>Las alertas no se cierran al normalizarse la temperatura.</span>
+    </div>
+  </section>
+
+  <div *ngIf="error" role="alert" class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">{{ error }}</div>
+  <div *ngIf="mensaje" role="status" class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">{{ mensaje }}</div>
+  <div *ngIf="tokenSensor" class="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:bg-amber-950/30">
+    <p class="font-black text-amber-950 dark:text-amber-100">Clave del dispositivo — guárdala ahora, solo se muestra una vez.</p>
+    <div class="mt-2 flex flex-wrap items-center gap-3"><code class="max-w-full break-all rounded bg-white px-3 py-2 text-xs dark:bg-slate-900">{{ tokenSensor }}</code><button type="button" class="rounded-lg bg-amber-700 px-3 py-2 text-xs font-black text-white" (click)="copiarClave()">Copiar clave</button><button type="button" class="text-xs font-bold text-slate-600 underline" (click)="tokenSensor = ''">Ocultar</button></div>
+  </div>
+
+  <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <article class="metric"><span>Neveras registradas</span><strong>{{ dashboard?.refrigeratorCount ?? '—' }}</strong><small>Activas en VetSphere</small></article>
+    <article class="metric"><span>Sensores activos</span><strong>{{ dashboard?.activeSensors ?? '—' }}</strong><small>Lecturas recibidas</small></article>
+    <article class="metric"><span>Sensores desconectados</span><strong>{{ dashboard?.disconnectedSensors ?? '—' }}</strong><small>Revisar comunicación</small></article>
+    <article class="metric"><span>Neveras en rango</span><strong>{{ dashboard?.normalRefrigerators ?? '—' }}</strong><small>Medición reciente</small></article>
+    <article class="metric metric-danger"><span>Alertas críticas abiertas</span><strong>{{ dashboard?.criticalAlerts ?? '—' }}</strong><small>Requieren revisión humana</small></article>
+  </section>
+
+  <section class="panel p-5 sm:p-6">
+    <div class="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div><p class="eyebrow">Control de simulación</p><h3 class="section-title">Demostración IoT sin hardware</h3><p class="section-copy">El simulador genera variaciones dinámicas cada 5 o 10 segundos y guarda cada lectura en SQL Server.</p></div>
+      <div class="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 p-2 dark:bg-slate-900/70">
+        <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Intervalo
+          <select class="field ml-2" [(ngModel)]="simulacion.intervalSeconds" name="intervalo"><option [ngValue]="5">5 s</option><option [ngValue]="10">10 s</option></select>
+        </label>
+        <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Modo
+          <select class="field ml-2" [(ngModel)]="simulacion.mode" name="modo"><option value="NORMAL">Normal</option><option value="WARNING">Advertencia</option><option value="CRITICAL">Crítico</option></select>
+        </label>
+        <button *ngIf="!simulacion.running" type="button" class="button-primary" (click)="iniciarSimulacion()">Iniciar</button>
+        <button *ngIf="simulacion.running" type="button" class="button-danger" (click)="detenerSimulacion()">Detener</button>
+        <button type="button" class="button-secondary" (click)="reiniciarSimulacion()">Reiniciar</button>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 text-xs">
+      <span class="rounded-full px-3 py-1.5 font-black" [ngClass]="simulacion.running ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'">{{ simulacion.running ? 'SIMULACIÓN ACTIVA' : 'SIMULACIÓN DETENIDA' }}</span>
+      <span class="rounded-full bg-cyan-50 px-3 py-1.5 font-bold text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200">{{ simulacion.mode }} · {{ simulacion.intervalSeconds }} segundos</span>
+      <span class="text-slate-500 dark:text-slate-400">Forzar lectura crítica y desconexión están disponibles en cada nevera.</span>
+    </div>
+  </section>
+
+  <section class="panel p-5 sm:p-6">
+    <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div><p class="eyebrow">Monitoreo actual</p><h3 class="section-title">Neveras de medicamentos</h3></div>
+      <div class="flex gap-2"><button type="button" class="button-secondary" (click)="mostrarFormularioSensor = !mostrarFormularioSensor">{{ mostrarFormularioSensor ? 'Cerrar sensor' : 'Registrar sensor' }}</button><button type="button" class="button-primary" (click)="mostrarFormularioNevera = !mostrarFormularioNevera">{{ mostrarFormularioNevera ? 'Cerrar formulario' : 'Agregar nevera' }}</button></div>
+    </div>
+
+    <form *ngIf="mostrarFormularioNevera" class="form-grid mb-5" (ngSubmit)="guardarNevera()">
+      <label>Código<input class="field" required name="fridgeCode" [(ngModel)]="nuevaNevera.code" placeholder="FR-04"></label>
+      <label>Nombre<input class="field" required name="fridgeName" [(ngModel)]="nuevaNevera.name" placeholder="Nevera de vacunas"></label>
+      <label>Ubicación<input class="field" required name="fridgeLocation" [(ngModel)]="nuevaNevera.location" placeholder="Farmacia · Zona 2"></label>
+      <label>Capacidad<input class="field" name="fridgeCapacity" [(ngModel)]="nuevaNevera.capacity" placeholder="120 L"></label>
+      <label>Mínimo °C<input class="field" type="number" step="0.1" required name="fridgeMin" [(ngModel)]="nuevaNevera.min_temp"></label>
+      <label>Máximo °C<input class="field" type="number" step="0.1" required name="fridgeMax" [(ngModel)]="nuevaNevera.max_temp"></label>
+      <button class="button-primary self-end" type="submit">Guardar nevera</button>
+    </form>
+
+    <form *ngIf="mostrarFormularioSensor" class="form-grid mb-5" (ngSubmit)="guardarSensor()">
+      <label>Identificador único<input class="field" required name="sensorDeviceId" [(ngModel)]="nuevoSensor.device_id" placeholder="ESP32-NEVERA-04"></label>
+      <label>Nevera asociada<select class="field" required name="sensorFridge" [(ngModel)]="nuevoSensor.refrigerator_id"><option [ngValue]="0" disabled>Selecciona nevera</option><option *ngFor="let fridge of refrigeradores" [ngValue]="fridge.id || fridge.refrigeratorId">{{ fridge.name }}</option></select></label>
+      <label>Tipo de sensor<input class="field" name="sensorType" [(ngModel)]="nuevoSensor.sensor_type" placeholder="DS18B20"></label>
+      <button class="button-primary self-end" type="submit">Registrar y generar credencial</button>
+    </form>
+
+    <div class="grid gap-4 lg:grid-cols-2">
+      <article *ngFor="let fridge of refrigeradores" class="fridge-card" [ngClass]="'state-' + estadoNevera(fridge)">
+        <div class="flex items-start justify-between gap-3">
+          <div><span class="text-[10px] font-black uppercase tracking-wider text-slate-500">{{ fridge.code }} · {{ fridge.location }}</span><h4 class="mt-1 text-base font-black text-slate-950 dark:text-white">{{ fridge.name }}</h4><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Rango {{ fridge.minTemp }}–{{ fridge.maxTemp }} °C <span *ngIf="fridge.capacity">· {{ fridge.capacity }}</span></p></div>
+          <span class="state-pill" [ngClass]="'pill-' + estadoNevera(fridge)">{{ textoEstado(fridge) }}</span>
+        </div>
+        <div class="mt-5 flex items-end justify-between gap-4">
+          <div><strong class="temperature">{{ fridge.temperature == null ? '—' : (fridge.temperature | number:'1.1-2') }}<span *ngIf="fridge.temperature != null">°C</span></strong><p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{{ fridge.lastSeen ? ('Último dato: ' + (fridge.lastSeen | date:'short')) : 'Esperando primera lectura' }}</p></div>
+          <div class="text-right"><p class="text-xs font-bold text-slate-500">Sensores {{ fridge.activeSensors || 0 }}/{{ fridge.sensorCount || 0 }}</p><p class="mt-1 text-xs font-bold" [ngClass]="fridge.openAlerts ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'">{{ fridge.openAlerts || 0 }} alertas abiertas</p></div>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+          <button *ngIf="tieneSensorSimulado(fridge)" type="button" class="button-danger button-small" (click)="forzarCritica(fridge)">Forzar temperatura crítica</button>
+          <button *ngIf="tieneSensorSimulado(fridge)" type="button" class="button-secondary button-small" (click)="desconectarSensor(fridge)">Simular desconexión</button>
+          <button type="button" class="button-secondary button-small" (click)="elegirRefrigerador(fridge.refrigeratorId)">Ver historial</button>
+          <button type="button" class="button-secondary button-small" (click)="iniciarEdicionNevera(fridge)">Editar</button>
+          <button type="button" class="button-text button-small" (click)="desactivarNevera(fridge)">Desactivar</button>
+        </div>
+        <form *ngIf="neveraEditando === fridge.refrigeratorId" class="form-grid mt-3" (ngSubmit)="guardarEdicionNevera(fridge)">
+          <label>Nombre<input class="field" required name="editName" [(ngModel)]="editarNevera.name"></label>
+          <label>Ubicación<input class="field" required name="editLocation" [(ngModel)]="editarNevera.location"></label>
+          <label>Capacidad<input class="field" name="editCapacity" [(ngModel)]="editarNevera.capacity"></label>
+          <label>Mínimo °C<input class="field" type="number" step="0.1" required name="editMin" [(ngModel)]="editarNevera.min_temp"></label>
+          <label>Máximo °C<input class="field" type="number" step="0.1" required name="editMax" [(ngModel)]="editarNevera.max_temp"></label>
+          <button class="button-primary self-end" type="submit">Guardar cambios</button>
+        </form>
+      </article>
+      <div *ngIf="!refrigeradores.length" class="empty-state lg:col-span-2">No hay neveras activas. Registra una o revisa la conexión con el servicio IoT.</div>
+    </div>
+  </section>
+
+  <section class="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
+    <div class="panel p-5 sm:p-6">
+      <div class="mb-4 flex flex-wrap items-end justify-between gap-3"><div><p class="eyebrow">Trazabilidad</p><h3 class="section-title">Historial de temperatura</h3></div><div class="flex flex-wrap items-end gap-2"><label class="text-xs font-bold text-slate-500">Desde<input class="field mt-1 block" type="date" [(ngModel)]="fechaDesde" name="dateFrom"></label><label class="text-xs font-bold text-slate-500">Hasta<input class="field mt-1 block" type="date" [(ngModel)]="fechaHasta" name="dateTo"></label><select class="field" [ngModel]="seleccionRefrigerador" (ngModelChange)="elegirRefrigerador($event)" name="historyFridge"><option [ngValue]="null">Todas las neveras</option><option *ngFor="let fridge of refrigeradores" [ngValue]="fridge.refrigeratorId">{{ fridge.name }}</option></select><button class="button-secondary" type="button" (click)="cargarLecturas()">Filtrar</button><button class="button-secondary" type="button" (click)="descargarReporte('xlsx')">Excel</button><button class="button-secondary" type="button" (click)="descargarReporte('pdf')">PDF</button></div></div>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div class="stat"><span>Mínima · 24 h</span><b>{{ estadisticas?.minimum == null ? '—' : (estadisticas.minimum | number:'1.1-2') + ' °C' }}</b></div>
+        <div class="stat"><span>Máxima · 24 h</span><b>{{ estadisticas?.maximum == null ? '—' : (estadisticas.maximum | number:'1.1-2') + ' °C' }}</b></div>
+        <div class="stat"><span>Promedio · 24 h</span><b>{{ estadisticas?.average == null ? '—' : (estadisticas.average | number:'1.1-2') + ' °C' }}</b></div>
+        <div class="stat"><span>Fuera de rango</span><b>{{ estadisticas?.outOfRangeCount ?? 0 }} lecturas</b></div>
+      </div>
+      <div class="chart-wrap mt-4"><svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Variación de temperatura registrada"><polyline *ngIf="puntosGrafica" [attr.points]="puntosGrafica" fill="none" stroke="#0891b2" stroke-width="1.4" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></polyline><text *ngIf="!puntosGrafica" x="50" y="52" text-anchor="middle" fill="#64748b" font-size="4">Inicia la simulación para generar lecturas</text></svg></div>
+      <div class="mt-4 max-h-72 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
+        <table class="w-full text-left text-xs"><thead class="sticky top-0 bg-slate-50 text-slate-500 dark:bg-slate-900"><tr><th class="p-3">Fecha</th><th class="p-3">Nevera / sensor</th><th class="p-3">Temperatura</th><th class="p-3">Origen</th></tr></thead><tbody><tr *ngFor="let reading of lecturas | slice:0:100" class="border-t border-slate-100 dark:border-slate-800"><td class="whitespace-nowrap p-3">{{ reading.timestamp | date:'short' }}</td><td class="p-3">{{ reading.refrigerator || reading.deviceId }}</td><td class="p-3 font-black">{{ reading.temperature | number:'1.1-2' }} °C</td><td class="p-3"><span class="source-tag" [ngClass]="reading.source === 'SIMULATED' ? 'source-simulated' : 'source-device'">{{ reading.source === 'SIMULATED' ? 'SIMULADA' : 'DISPOSITIVO' }}</span></td></tr><tr *ngIf="!lecturas.length"><td colspan="4" class="p-5 text-center text-slate-500">Sin mediciones para el filtro actual.</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <div class="panel p-5 sm:p-6">
+      <p class="eyebrow">Atención humana</p><h3 class="section-title">Alertas e incidentes</h3><p class="section-copy">Una normalización térmica no cierra alertas. Registra la acción y resuelve solo tras revisar el incidente.</p>
+      <div class="mt-4 space-y-3">
+        <article *ngFor="let alert of alertas | slice:0:40" class="alert-card" [ngClass]="alert.status === 'RESOLVED' ? 'alert-resolved' : alert.severity === 'CRITICAL' ? 'alert-critical' : 'alert-warning'">
+          <div class="flex items-start justify-between gap-3"><div><div class="flex flex-wrap items-center gap-2"><span class="font-black">{{ alert.refrigerator || alert.message }}</span><span class="source-tag" [ngClass]="alert.status === 'RESOLVED' ? 'source-device' : alert.severity === 'CRITICAL' ? 'source-critical' : 'source-warning'">{{ alert.severity }} · {{ alert.status }}</span></div><p class="mt-1 text-xs">{{ alert.message }}</p><p class="mt-1 text-[10px] opacity-70">{{ alert.createdAt | date:'short' }} <span *ngIf="alert.temperature != null">· {{ alert.temperature }} °C</span></p></div></div>
+          <div *ngIf="alert.status !== 'RESOLVED'" class="mt-3 flex flex-wrap items-center gap-2"><button class="button-secondary button-small" type="button" (click)="atenderAlerta(alert,'ATTENDED')">Registrar atención</button><button class="button-danger button-small" type="button" (click)="atenderAlerta(alert,'RESOLVED')">Resolver alerta</button></div>
+          <div *ngIf="alertaEnEdicion === alert.id" class="mt-3 flex gap-2"><input class="field min-w-0 flex-1" [(ngModel)]="notaAlerta" [name]="'note'+alert.id" placeholder="Acción tomada y responsable"><button type="button" class="button-primary" (click)="atenderAlerta(alert,'ATTENDED')">Guardar atención</button><button type="button" class="button-danger" (click)="atenderAlerta(alert,'RESOLVED')">Guardar y resolver</button></div>
+          <p *ngIf="alert.attendedBy" class="mt-2 text-[10px] opacity-70">Atendió: {{ alert.attendedBy }}</p>
+        </article>
+        <div *ngIf="!alertas.length" class="empty-state">No hay incidentes registrados. Las lecturas nuevas se evalúan automáticamente.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid gap-5 xl:grid-cols-2">
+    <div class="panel p-5 sm:p-6"><p class="eyebrow">Dispositivos</p><h3 class="section-title">Sensores registrados</h3>
+      <div class="mt-4 space-y-2"><article *ngFor="let sensor of sensores" class="sensor-row"><div><b>{{ sensor.deviceId }}</b><p class="text-xs text-slate-500 dark:text-slate-400">{{ sensor.refrigerator }} · {{ sensor.sensorType }} <span *ngIf="sensor.simulated" class="font-black text-amber-700">· SIMULADO</span></p><p class="text-[10px] text-slate-500">Último contacto: {{ sensor.lastSeen ? (sensor.lastSeen | date:'short') : 'sin comunicación todavía' }}</p></div><div class="flex items-center gap-2"><span class="state-pill" [ngClass]="sensor.status === 'ACTIVE' ? 'pill-normal' : 'pill-offline'">{{ sensor.status === 'ACTIVE' ? 'Activo' : sensor.status === 'INACTIVE' ? 'Inactivo' : 'Desconectado' }}</span><button *ngIf="sensor.simulated && sensor.status === 'DISCONNECTED'" type="button" class="button-secondary button-small" (click)="reconectarSensor(sensor)">Reconectar</button><button *ngIf="!sensor.simulated && sensor.status !== 'INACTIVE'" type="button" class="button-text button-small" (click)="renovarClave(sensor)">Renovar clave</button><button *ngIf="sensor.status !== 'INACTIVE'" type="button" class="button-danger button-small" (click)="desactivarSensor(sensor)">Desactivar</button></div></article></div>
+    </div>
+    <div class="panel p-5 sm:p-6"><p class="eyebrow">Inventario vinculado</p><h3 class="section-title">Medicamentos por nevera</h3><p class="section-copy">El módulo guarda la referencia al código existente de Farmacia, sin duplicar productos. Exposición crítica marca el producto para evaluación; no lo declara dañado.</p>
+      <form class="mt-4 flex flex-col gap-2 sm:flex-row" (ngSubmit)="asignarProducto()"><select class="field min-w-0 flex-1" required name="productCode" [(ngModel)]="nuevaAsignacion.product_code"><option value="">Selecciona medicamento</option><option *ngFor="let product of productos" [value]="product.codigo">{{ product.nombre }} · {{ product.codigo }}</option></select><select class="field" required name="storageFridge" [(ngModel)]="nuevaAsignacion.refrigerator_id"><option [ngValue]="0" disabled>Nevera</option><option *ngFor="let fridge of refrigeradores" [ngValue]="fridge.refrigeratorId">{{ fridge.name }}</option></select><button class="button-primary" type="submit">Asociar</button></form>
+      <div class="mt-3 space-y-2"><article *ngFor="let item of storage" class="sensor-row"><div><b>{{ nombreProducto(item.productCode) }}</b><p class="text-xs text-slate-500 dark:text-slate-400">{{ item.productCode }} · {{ item.refrigerator }}</p><span *ngIf="item.reviewRequired" class="mt-1 inline-flex rounded-full bg-rose-100 px-2 py-1 text-[10px] font-black text-rose-800 dark:bg-rose-950/50 dark:text-rose-200">REQUIERE REVISIÓN DE CONSERVACIÓN</span></div><button *ngIf="item.reviewRequired" type="button" class="button-secondary button-small" (click)="actualizarRevision(item,false)">Registrar revisión</button></article><div *ngIf="!storage.length" class="empty-state">Asocia los medicamentos que se conservan en frío.</div></div>
+    </div>
+  </section>
+</div>

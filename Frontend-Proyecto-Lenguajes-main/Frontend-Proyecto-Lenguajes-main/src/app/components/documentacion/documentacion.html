@@ -1,0 +1,96 @@
+<article class="informe-calidad" @fadeInUp>
+  <header class="informe-portada">
+    <div>
+      <p class="calidad-eyebrow">VetSphere · Ingeniería de software</p>
+      <h1>Evaluación de calidad del software</h1>
+      <p>Documento base editable e imprimible para describir el sistema, sus usuarios, la seguridad y los criterios de calidad evaluados.</p>
+    </div>
+    <button class="boton-primario no-print" type="button" (click)="imprimir()">
+      <app-icono name="download" [size]="18"></app-icono>
+      Imprimir o guardar PDF
+    </button>
+  </header>
+
+  <section class="calidad-panel">
+    <p class="calidad-eyebrow">1 · Información general</p>
+    <h2>Propósito y alcance</h2>
+    <p>VetSphere es un sistema web académico para apoyar la operación de una clínica veterinaria. Integra una interfaz Angular, servicios REST en Spring Boot y una base de datos SQL Server. En el perfil local se usan datos ficticios para demostración.</p>
+    <dl class="ficha-proyecto">
+      <div><dt>Producto</dt><dd>VetSphere, gestión clínica veterinaria</dd></div>
+      <div><dt>Usuarios</dt><dd>Administración, veterinaria, recepción y clientes</dd></div>
+      <div><dt>Alcance revisado</dt><dd>Inicio de sesión, permisos, pacientes, agenda, farmacia, historias clínicas y reportes</dd></div>
+      <div><dt>Base de evaluación</dt><dd>ISO/IEC 25010:2023 e ISO/IEC 27001:2022 con Amd 1:2024</dd></div>
+    </dl>
+  </section>
+
+  <section class="calidad-panel">
+    <p class="calidad-eyebrow">2 · Perfiles y permisos</p>
+    <h2>Acceso según el rol</h2>
+    <div class="calidad-table-wrap">
+      <table class="calidad-tabla">
+        <thead><tr><th>Rol</th><th>Responsabilidades y módulos</th><th>Límite de acceso</th></tr></thead>
+        <tbody>
+          <tr><td>Administrador</td><td>Usuarios, reportes, indicadores, configuración y operación clínica.</td><td>Administra cuentas y catálogos; las acciones se registran en el sistema.</td></tr>
+          <tr><td>Veterinario</td><td>Consultas, historias clínicas, cirugías, laboratorio y hospitalización.</td><td>No administra usuarios ni reportes financieros.</td></tr>
+          <tr><td>Recepcionista</td><td>Registro de clientes, agenda, recepción, farmacia y facturación.</td><td>No edita historias clínicas ni administra cuentas.</td></tr>
+          <tr><td>Cliente</td><td>Consulta sus mascotas y la información relacionada con su atención.</td><td>Solo debe acceder a sus propios pacientes; la propiedad se comprueba en el servidor.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="calidad-panel">
+    <p class="calidad-eyebrow">3 · ISO/IEC 25010:2023</p>
+    <h2>Modelo de calidad del producto</h2>
+    <p>La edición vigente define nueve características para especificar y evaluar la calidad de un producto de software. Esta matriz es una evaluación inicial; completa los resultados con las mediciones y evidencias de tu ejecución.</p>
+    <div class="caracteristicas-grid">
+      <article *ngFor="let criterio of criteriosCalidad">
+        <span>{{ criterio.estado }}</span>
+        <h3>{{ criterio.nombre }}</h3>
+        <p>{{ criterio.evidencia }}</p>
+        <small><b>Medida propuesta:</b> {{ criterio.medida }}</small>
+      </article>
+    </div>
+  </section>
+
+  <section class="calidad-panel">
+    <p class="calidad-eyebrow">4 · Verificación funcional · 29/09/2026</p>
+    <h2>Pruebas ejecutadas</h2>
+    <p>Resultados del entorno local. Las pruebas manuales verifican los flujos indicados, pero no reemplazan pruebas automatizadas de backend, carga ni una auditoría formal.</p>
+    <div class="calidad-table-wrap">
+      <table class="calidad-tabla">
+        <thead><tr><th>Prueba</th><th>Resultado</th><th>Evidencia</th></tr></thead>
+        <tbody>
+          <tr><td>Frontend Angular</td><td>22 aprobadas · 0 fallidas</td><td>Chrome Headless; pruebas unitarias detectadas en los componentes.</td></tr>
+          <tr><td>Backend VetSphere</td><td>Compila; sin pruebas Java</td><td>Maven informa “No tests to run”; roles comprobados manualmente.</td></tr>
+          <tr><td>Cliente SOAP</td><td>Compila; sin pruebas Java</td><td>Conexión a SQL y al WSDL verificada en el entorno local.</td></tr>
+          <tr><td>Permisos por perfil</td><td>4 permitidos · 3 denegados</td><td>Administrador, veterinario, recepción y cliente; HTTP 200/403 esperado.</td></tr>
+          <tr><td>Transferencia de inventario</td><td>Aprobada · stock restaurado</td><td>MED-001: VetSphere 6 y Mini 0; recibir 1 y devolver 1 conservó esos valores.</td></tr>
+          <tr><td>Edición y persistencia</td><td>Aprobadas</td><td>Actualización de veterinario, producto y stock con base SQL local.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="conclusion-callout"><b>Alcance pendiente:</b> rendimiento bajo carga, recuperación ante fallos, cobertura de casos de negocio, compatibilidad entre navegadores y auditoría de seguridad.</div>
+  </section>
+
+  <section class="calidad-panel">
+    <p class="calidad-eyebrow">5 · ISO/IEC 27001:2022</p>
+    <h2>Seguridad y tratamiento del riesgo</h2>
+    <p>El software incorpora controles técnicos que apoyan la seguridad. La conformidad con ISO/IEC 27001 requiere además que la organización defina el alcance y los riesgos del SGSI, aplique controles, conserve evidencias y mantenga un proceso de mejora continua.</p>
+    <div class="controles-grid">
+      <article><h3>Controles visibles en el producto</h3><ul><li>Autenticación y autorización por roles en el backend.</li><li>Almacenamiento de contraseñas con BCrypt y secretos fuera del código.</li><li>Validación de datos recibidos y límites de tamaño para archivos.</li><li>Conexión local a SQL configurada para cifrado; certificado de producción pendiente.</li></ul></article>
+      <article><h3>Evidencias que faltan para una auditoría</h3><ul><li>Alcance aprobado, inventario de activos y evaluación de riesgos.</li><li>Declaración de aplicabilidad, responsables y políticas de seguridad.</li><li>Pruebas de autorización, recuperación, respaldo y restauración.</li><li>Gestión de incidentes, retención, continuidad y revisión periódica.</li></ul></article>
+    </div>
+  </section>
+
+  <section class="calidad-panel">
+    <p class="calidad-eyebrow">6 · Conclusión</p>
+    <h2>Conclusión de la evaluación</h2>
+    <p>La aplicación cuenta con una base funcional para demostrar una clínica veterinaria y controles técnicos iniciales. La evaluación no equivale a una certificación ni demuestra por sí sola conformidad con ISO/IEC 27001. Para cerrar el informe, registra el entorno, versión, fecha, casos ejecutados, resultado observado y evidencia de cada criterio.</p>
+    <div class="conclusion-callout"><b>Plantilla de evidencia:</b> criterio · escenario probado · resultado esperado · resultado obtenido · captura o registro · observación y mejora propuesta.</div>
+  </section>
+
+  <footer class="referencias">
+    <b>Referencias:</b> ISO/IEC 25010:2023, Product quality model; ISO/IEC 27001:2022, Information security management systems — Requirements; ISO/IEC 27001:2022/Amd 1:2024.
+  </footer>
+</article>

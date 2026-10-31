@@ -1,0 +1,156 @@
+    <section class="page-shell" @fadeInUp>
+      <div class="page-header">
+        <div>
+          <p class="page-eyebrow">Quirofano</p>
+          <h1 class="page-title">Cirugias y postoperatorios</h1>
+          <p class="page-subtitle">Agenda quirurgica, anestesia, cirujano responsable, constantes y seguimiento postoperatorio.</p>
+        </div>
+        <button class="boton-primario" type="button" (click)="nueva()">
+          <app-icono name="surgery" [size]="18"></app-icono>
+          Programar cirugia
+        </button>
+      </div>
+
+      <app-cargador *ngIf="cargando"></app-cargador>
+
+      <ng-container *ngIf="!cargando">
+      <div class="grid gap-4 md:grid-cols-4">
+        <article class="stat-card"><p class="stat-label">Programadas</p><p class="stat-value">{{ cirugias.length }}</p><p class="stat-note">Total</p></article>
+        <article class="stat-card"><p class="stat-label">Pendientes</p><p class="stat-value">{{ contarEstado('Pendiente') }}</p><p class="stat-note">Por atender</p></article>
+        <article class="stat-card"><p class="stat-label">Completadas</p><p class="stat-value">{{ contarEstado('Completada') }}</p><p class="stat-note">Historico</p></article>
+        <article class="stat-card"><p class="stat-label">Postoperatorio</p><p class="stat-value">{{ postoperatorios }}</p><p class="stat-note">Seguimiento</p></article>
+      </div>
+
+      <div class="panel p-4">
+        <label class="sr-only" for="cirugias-busqueda">Buscar cirugias</label>
+        <input id="cirugias-busqueda" class="campo w-full" placeholder="Buscar por mascota, procedimiento, cirujano o estado..." [(ngModel)]="busqueda">
+      </div>
+
+      <div class="grid gap-4 xl:grid-cols-2">
+        <article class="panel p-5" *ngFor="let cirugia of filtradas">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <span class="badge" [ngClass]="badgeEstado(cirugia.estado)">{{ cirugia.estado || 'Pendiente' }}</span>
+              <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 dark:bg-slate-900/60 dark:text-slate-300" 
+                    *ngIf="!cirugia.facturaId">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                Sin Facturar
+              </span>
+              <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300" 
+                    *ngIf="cirugia.facturaId && obtenerEstadoPago(cirugia.facturaId) === 'Pagado'">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                Pagado
+              </span>
+              <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                    *ngIf="cirugia.facturaId && obtenerEstadoPago(cirugia.facturaId) === 'Pendiente'">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                Pendiente
+              </span>
+              <h2 class="mt-3 text-xl font-black text-slate-950 dark:text-white">{{ cirugia.procedimiento }}</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ cirugia.fechaProgramada | date:'dd/MM/yyyy HH:mm' }} - <strong class="text-cyan-600 dark:text-cyan-400">${{ (cirugia.precio || 280) | number:'1.2-2' }}</strong></p>
+              <p class="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+                {{ cirugia.mascota?.nombre || 'Paciente sin asignar' }} - {{ cirugia.tipoAnestesia || 'Anestesia pendiente' }}
+              </p>
+            </div>
+            <div class="flex gap-2">
+              <button class="boton-secundario text-amber-600 border-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-400 dark:hover:bg-amber-950/30" 
+                      type="button" 
+                      *ngIf="cirugia.facturaId && obtenerEstadoPago(cirugia.facturaId) === 'Pendiente'"
+                      (click)="pagarFactura(cirugia.facturaId)">
+                Pagar
+              </button>
+              <button class="boton-secundario" type="button" (click)="editar(cirugia)">Editar</button>
+              <button class="boton-secundario" type="button" (click)="eliminar(cirugia)">Eliminar</button>
+            </div>
+          </div>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            <div class="soft-panel"><p class="form-label">Cirujano</p><p class="mt-2 font-black text-slate-950 dark:text-white">{{ cirugia.cirujanoPrincipal || nombreUsuario(cirugia.cirujano) }}</p></div>
+            <div class="soft-panel"><p class="form-label">Constantes</p><p class="mt-2 font-black text-slate-950 dark:text-white">{{ cirugia.constantesVitales || 'Sin registro' }}</p></div>
+          </div>
+          <p class="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">{{ cirugia.estadoPostoperatorio || cirugia.notas || 'Sin notas postoperatorias.' }}</p>
+        </article>
+      </div>
+      </ng-container>
+
+      <div class="fixed inset-0 z-50 bg-slate-950/60 p-3 backdrop-blur-sm sm:flex sm:justify-end sm:p-5"
+           *ngIf="formularioAbierto"
+           (click)="cerrar()">
+        <aside class="panel h-full w-full max-w-xl overflow-y-auto p-5 shadow-2xl sm:p-6" (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="page-eyebrow">{{ editandoId ? 'Editar cirugia' : 'Nueva cirugia' }}</p>
+              <h2 class="section-title">Formulario quirurgico</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Programa o actualiza el procedimiento sin salir del modulo.</p>
+            </div>
+            <button class="boton-icono" type="button" (click)="cerrar()" aria-label="Cerrar formulario"><app-icono name="x" [size]="18"></app-icono></button>
+          </div>
+
+          <form class="mt-5 grid gap-4" (ngSubmit)="guardar()">
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="cirugias-mascotaId">
+                <span class="form-label">Mascota</span>
+                <select id="cirugias-mascotaId" class="campo" name="mascotaId" [(ngModel)]="form.mascotaId" required>
+                  <option [ngValue]="null">Seleccionar mascota</option>
+                  <option *ngFor="let mascota of mascotas" [ngValue]="mascota.id">{{ mascota.nombre }} - {{ mascota.propietario?.nombres }}</option>
+                </select>
+              </label>
+              <label class="grid gap-2" for="cirugias-cirujanoId">
+                <span class="form-label">Cirujano</span>
+                <select id="cirugias-cirujanoId" class="campo" name="cirujanoId" [(ngModel)]="form.cirujanoId" required>
+                  <option [ngValue]="null">Seleccionar cirujano</option>
+                  <option *ngFor="let vet of veterinarios" [ngValue]="vet.id">{{ vet.nombres }} {{ vet.apellidos }}</option>
+                </select>
+              </label>
+            </div>
+            <label class="grid gap-2" for="cirugias-procedimiento">
+              <span class="form-label">Procedimiento</span>
+              <input id="cirugias-procedimiento" class="campo" name="procedimiento" [(ngModel)]="form.procedimiento" required>
+            </label>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="grid gap-2" for="cirugias-fechaProgramada">
+                <span class="form-label">Fecha programada</span>
+                <input id="cirugias-fechaProgramada" class="campo" type="datetime-local" name="fechaProgramada" [(ngModel)]="form.fechaProgramada">
+              </label>
+              <label class="grid gap-2" for="cirugias-estado">
+                <span class="form-label">Estado</span>
+                <select id="cirugias-estado" class="campo" name="estado" [(ngModel)]="form.estado">
+                  <option>Pendiente</option>
+                  <option>En quirofano</option>
+                  <option>Completada</option>
+                  <option>Postoperatorio</option>
+                  <option>Cancelada</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-3">
+              <label class="grid gap-2" for="cirugias-tipoAnestesia">
+                <span class="form-label">Tipo anestesia</span>
+                <input id="cirugias-tipoAnestesia" class="campo" name="tipoAnestesia" [(ngModel)]="form.tipoAnestesia">
+              </label>
+              <label class="grid gap-2" for="cirugias-cirujanoPrincipal">
+                <span class="form-label">Cirujano principal</span>
+                <input id="cirugias-cirujanoPrincipal" class="campo" name="cirujanoPrincipal" [(ngModel)]="form.cirujanoPrincipal">
+              </label>
+              <label class="grid gap-2" for="cirugias-precio">
+                <span class="form-label">Precio ($)</span>
+                <input id="cirugias-precio" class="campo" type="number" name="precio" [(ngModel)]="form.precio" min="0" step="0.01" required>
+              </label>
+            </div>
+            <label class="grid gap-2" for="cirugias-constantesVitales">
+              <span class="form-label">Constantes vitales</span>
+              <input id="cirugias-constantesVitales" class="campo" name="constantesVitales" [(ngModel)]="form.constantesVitales">
+            </label>
+            <label class="grid gap-2" for="cirugias-estadoPostoperatorio">
+              <span class="form-label">Estado postoperatorio</span>
+              <textarea id="cirugias-estadoPostoperatorio" class="campo min-h-24" name="estadoPostoperatorio" [(ngModel)]="form.estadoPostoperatorio"></textarea>
+            </label>
+            <label class="grid gap-2" for="cirugias-notas">
+              <span class="form-label">Notas</span>
+              <textarea id="cirugias-notas" class="campo min-h-24" name="notas" [(ngModel)]="form.notas"></textarea>
+            </label>
+            <button class="boton-primario w-full" type="submit">{{ editandoId ? 'Guardar cambios' : 'Programar cirugia' }}</button>
+            <p class="text-sm font-bold text-emerald-700 dark:text-emerald-300" *ngIf="mensaje">{{ mensaje }}</p>
+          </form>
+        </aside>
+      </div>
+    </section>

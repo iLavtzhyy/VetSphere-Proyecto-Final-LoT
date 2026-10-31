@@ -1,0 +1,391 @@
+
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Evaluación de Calidad de Software</title>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    background:#f1f3f5;
+    margin:40px;
+    color:#212529;
+}
+
+h1 {
+    color:#17365d;
+}
+
+.card {
+    background:white;
+    padding:25px;
+    margin-bottom:25px;
+    border-radius:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+
+.global {
+    font-size:55px;
+    font-weight:bold;
+    color:#17365d;
+}
+
+table {
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+
+th {
+    background:#17365d;
+    color:white;
+}
+
+th, td {
+    padding:12px;
+    border:1px solid #dee2e6;
+    text-align:left;
+}
+
+.bar {
+    background:#dee2e6;
+    height:22px;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.bar div {
+    height:100%;
+    background:#198754;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Evaluación de Calidad de Software</h1>
+
+<div class="card">
+
+<h2>Información</h2>
+
+<p>
+<b>Proyecto:</b>
+Calidad De Software Proyecto
+</p>
+
+<p>
+<b>Fecha:</b>
+2026-10-08T09:23:04.261568
+</p>
+
+<p>
+<b>Lenguajes detectados:</b>
+{'HTML': 26, 'JSON': 11, 'Python': 1, 'XML': 28, 'Java': 109, 'SQL': 2, 'JavaScript': 1, 'TypeScript': 56, 'CSS': 23}
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Calidad global</h2>
+
+<div class="global">
+94.0/100
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h2>Atributos de calidad</h2>
+
+<table>
+
+<tr>
+<th>Atributo</th>
+<th>Resultado</th>
+</tr>
+
+
+            <tr>
+                <td>Funcionalidad</td>
+                <td style="color:#198754;font-weight:bold">
+                    100.0
+                </td>
+            </tr>
+            
+            <tr>
+                <td>Fiabilidad</td>
+                <td style="color:#198754;font-weight:bold">
+                    100.0
+                </td>
+            </tr>
+            
+            <tr>
+                <td>Rendimiento</td>
+                <td style="color:#198754;font-weight:bold">
+                    100
+                </td>
+            </tr>
+            
+            <tr>
+                <td>Seguridad</td>
+                <td style="color:#198754;font-weight:bold">
+                    100
+                </td>
+            </tr>
+            
+            <tr>
+                <td>Mantenibilidad</td>
+                <td style="color:#ffc107;font-weight:bold">
+                    60.0
+                </td>
+            </tr>
+            
+            <tr>
+                <td>Usabilidad</td>
+                <td style="color:#198754;font-weight:bold">
+                    100
+                </td>
+            </tr>
+            
+            <tr>
+                <td>Portabilidad</td>
+                <td style="color:#198754;font-weight:bold">
+                    100
+                </td>
+            </tr>
+            
+            <tr>
+                <td>Calidad Global</td>
+                <td style="color:#198754;font-weight:bold">
+                    94.0
+                </td>
+            </tr>
+            
+            <tr>
+                <td>Densidad Hallazgos Seguridad</td>
+                <td style="color:#dc3545;font-weight:bold">
+                    0.0
+                </td>
+            </tr>
+            
+            <tr>
+                <td>Complejidad Media</td>
+                <td style="color:#dc3545;font-weight:bold">
+                    2.1
+                </td>
+            </tr>
+            
+            <tr>
+                <td>Duplicacion Lineas</td>
+                <td style="color:#198754;font-weight:bold">
+                    4398
+                </td>
+            </tr>
+            
+
+</table>
+
+</div>
+
+
+<div class="card">
+
+<h2>Métricas del código</h2>
+
+<table>
+
+<tr>
+<th>Métrica</th>
+<th>Valor</th>
+</tr>
+
+<tr>
+<td>Archivos</td>
+<td>246</td>
+</tr>
+
+<tr>
+<td>Líneas totales</td>
+<td>30062</td>
+</tr>
+
+<tr>
+<td>Líneas de código</td>
+<td>28070</td>
+</tr>
+
+<tr>
+<td>Líneas de comentarios</td>
+<td>168</td>
+</tr>
+
+<tr>
+<td>Funciones aproximadas</td>
+<td>663</td>
+</tr>
+
+<tr>
+<td>Clases aproximadas</td>
+<td>135</td>
+</tr>
+
+<tr>
+<td>Complejidad ciclomática aproximada</td>
+<td>1389</td>
+</tr>
+
+<tr>
+<td>Complejidad media aproximada</td>
+<td>2.1</td>
+</tr>
+
+<tr>
+<td>Líneas duplicadas aproximadas</td>
+<td>4398</td>
+</tr>
+
+</table>
+
+</div>
+
+
+<div class="card">
+
+<h2>Seguridad</h2>
+
+<table>
+
+<tr>
+<th>Archivo</th>
+<th>Hallazgo</th>
+<th>Cantidad</th>
+</tr>
+
+<tr><td colspan='3'>No se encontraron patrones básicos.</td></tr>
+
+</table>
+
+<p>
+<b>Nota:</b>
+Este análisis es estático.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Pruebas funcionales detectadas</h2>
+
+<table>
+
+<tr>
+<th>Prueba</th>
+<th>Resultado</th>
+<th>Tiempo</th>
+</tr>
+
+
+        <tr>
+            <td>C:\Users\ESTUDIANTE\Downloads\Calidad De Software Proyecto\test_calidad_sistema.py</td>
+            <td style="color:green;font-weight:bold">
+                OK
+            </td>
+            <td>39.2 ms</td>
+        </tr>
+        
+
+</table>
+
+</div>
+
+
+<div class="card">
+
+<h2>Rendimiento del análisis</h2>
+
+<p>
+Tiempo:
+10.3 ms
+</p>
+
+<p>
+Datos analizados:
+1.13 MB
+</p>
+
+<p>
+Velocidad:
+109.75 MB/s
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Portabilidad</h2>
+
+<table>
+
+<tr>
+<td>Sistema operativo</td>
+<td>Windows</td>
+</tr>
+
+<tr>
+<td>Arquitectura</td>
+<td>AMD64</td>
+</tr>
+
+<tr>
+<td>Python</td>
+<td>3.14.7</td>
+</tr>
+
+</table>
+
+</div>
+
+
+<div class="card">
+
+<h2>Dependencias detectadas</h2>
+
+<ul>
+
+<li>C:\Users\ESTUDIANTE\Downloads\Calidad De Software Proyecto\Backend-Proyecto-Lenguajes-main\Backend-Proyecto-Lenguajes-main\pom.xml</li><li>C:\Users\ESTUDIANTE\Downloads\Calidad De Software Proyecto\Frontend-Proyecto-Lenguajes-main\Frontend-Proyecto-Lenguajes-main\package.json</li><li>C:\Users\ESTUDIANTE\Downloads\Calidad De Software Proyecto\MiniProyecto-SOAP-master\MiniProyecto-SOAP-master\pom.xml</li>
+
+</ul>
+
+</div>
+
+
+<div class="card">
+
+<h2>Pruebas detectadas</h2>
+
+<p>
+Cantidad:
+27
+</p>
+
+</div>
+
+
+</body>
+
+</html>

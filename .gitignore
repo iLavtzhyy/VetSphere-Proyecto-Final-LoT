@@ -1,0 +1,44 @@
+# ── VetSphere · ignorados globales del repositorio ──────────────────────────
+
+# Secretos y entornos locales
+.env
+.env.*
+!.env.example
+
+# Artefactos de compilación
+target/
+node_modules/
+dist/
+.angular/
+.pnpm-store/
+uploads/
+*.class
+*.jar
+
+# Logs y reportes temporales
+*.log
+ng-serve.log
+ng-serve.err.log
+logs/
+tmp/
+output/
+coverage/
+.pytest_cache/
+.mypy_cache/
+
+# IDEs y editores
+.idea/
+.vscode/
+.settings/
+.project
+.classpath
+
+# Sistema operativo
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/

@@ -1,0 +1,95 @@
+    <main class="min-h-screen bg-slate-50 text-slate-950 dark:bg-[#07111f] dark:text-white">
+      <section class="mx-auto grid min-h-screen max-w-6xl items-center gap-8 px-4 py-10 lg:grid-cols-[1fr_440px]">
+        <div class="hidden lg:block">
+          <img class="h-20 w-20 rounded-lg bg-white object-contain p-2 shadow-lg" src="assets/logo-vetsphere-icon.png" alt="VetSphere">
+          <p class="mt-8 text-sm font-black uppercase text-cyan-700 dark:text-cyan-300">Acceso seguro VetSphere</p>
+          <h1 class="mt-3 max-w-xl text-5xl font-black leading-tight">Gestion clinica veterinaria protegida</h1>
+          <p class="mt-5 max-w-xl text-lg leading-8 text-slate-600 dark:text-slate-300">Ingresa a tu cuenta para continuar.</p>
+        </div>
+
+        <form class="panel p-6 shadow-xl sm:p-7" (ngSubmit)="autenticadorPendiente ? verificarAutenticador() : entrar()" *ngIf="!recuperacionAbierta">
+          <div class="flex items-center gap-3">
+            <img class="h-12 w-12 rounded-lg bg-white object-contain p-1 ring-1 ring-slate-200" src="assets/logo-vetsphere-icon.png" alt="VetSphere">
+            <div>
+              <p class="text-sm font-black uppercase text-cyan-700 dark:text-cyan-300">Acceso seguro</p>
+              <h2 class="text-2xl font-black">Iniciar sesion</h2>
+            </div>
+          </div>
+
+          <ng-container *ngIf="!autenticadorPendiente; else segundoFactor">
+            <label class="mt-6 block text-sm font-bold" for="login-email">Correo</label>
+            <input id="login-email" class="campo mt-2 w-full" type="email" autocomplete="email" [(ngModel)]="email" name="email" required>
+            <label class="mt-4 block text-sm font-bold" for="login-password">Contrasena</label>
+            <input id="login-password" type="password" class="campo mt-2 w-full" autocomplete="current-password" [(ngModel)]="password" name="password" required>
+          </ng-container>
+          <ng-template #segundoFactor>
+            <p class="mt-6 text-sm text-slate-600 dark:text-slate-300">Elige cómo quieres verificar tu inicio de sesión.</p>
+            <label class="mt-4 block text-sm font-bold" for="metodo-segundo-factor">Método de verificación</label>
+            <select id="metodo-segundo-factor" class="campo mt-2 w-full" [(ngModel)]="metodoSegundoFactor" name="metodoSegundoFactor" (ngModelChange)="codigoAutenticador = ''; error = ''; mensajeSegundoFactor = ''">
+              <option *ngFor="let metodo of metodosSegundoFactor" [value]="metodo">
+                {{ metodo === 'AUTENTICADOR' ? 'Google Authenticator' : metodo === 'CORREO' ? 'Código por Gmail/correo' : 'Código de respaldo' }}
+              </option>
+            </select>
+            <p class="mt-3 text-sm text-slate-600 dark:text-slate-300" *ngIf="metodoSegundoFactor === 'AUTENTICADOR'">Ingresa el código de seis dígitos de tu aplicación autenticadora.</p>
+            <p class="mt-3 text-sm text-slate-600 dark:text-slate-300" *ngIf="metodoSegundoFactor === 'CORREO'">Solicita un código de seis dígitos enviado al correo verificado de tu cuenta.</p>
+            <p class="mt-3 text-sm text-slate-600 dark:text-slate-300" *ngIf="metodoSegundoFactor === 'RESPALDO'">Cada código de respaldo se puede usar una sola vez.</p>
+            <button *ngIf="metodoSegundoFactor === 'CORREO'" type="button" class="mt-3 text-sm font-bold text-cyan-700 dark:text-cyan-300" (click)="solicitarCodigoSegundoFactor()" [disabled]="enviandoLogin">Enviar o reenviar código a mi correo</button>
+            <p *ngIf="mensajeSegundoFactor" class="mt-2 text-sm font-bold text-emerald-700 dark:text-emerald-300">{{ mensajeSegundoFactor }}</p>
+            <label class="mt-4 block text-sm font-bold" for="login-totp">{{ metodoSegundoFactor === 'RESPALDO' ? 'Código de respaldo' : 'Código de verificación' }}</label>
+            <input id="login-totp" class="campo mt-2 w-full text-center text-xl font-black tracking-[.25rem]" [attr.inputmode]="metodoSegundoFactor === 'RESPALDO' ? 'text' : 'numeric'" autocomplete="one-time-code" [maxlength]="metodoSegundoFactor === 'RESPALDO' ? 14 : 6" [(ngModel)]="codigoAutenticador" name="codigoAutenticador" required>
+          </ng-template>
+
+          <button class="boton-primario mt-6 w-full" type="submit" [disabled]="enviandoLogin">
+            {{ enviandoLogin ? 'Validando…' : autenticadorPendiente ? 'Verificar e iniciar sesión' : 'Entrar' }}
+          </button>
+
+          <!-- Aviso destacado: la cuenta esta bloqueada temporalmente (HTTP 423) -->
+          <div class="aviso-bloqueo mt-5" *ngIf="cuentaBloqueada" role="alert">
+            <span class="aviso-bloqueo-icono"><app-icono name="alert" [size]="20"></app-icono></span>
+            <div class="min-w-0">
+              <p class="aviso-bloqueo-titulo">Cuenta bloqueada temporalmente</p>
+              <p class="aviso-bloqueo-texto">{{ mensajeBloqueo }}</p>
+              <p class="aviso-bloqueo-texto aviso-bloqueo-destacado" *ngIf="detalleBloqueo">{{ detalleBloqueo }}</p>
+              <p class="aviso-bloqueo-texto">Por seguridad, la cuenta se bloquea por 3 horas tras 3 intentos fallidos. Cuando termine el bloqueo podras volver a iniciar sesion.</p>
+            </div>
+          </div>
+
+          <p class="mt-4 text-sm font-bold text-rose-600 dark:text-rose-300" *ngIf="error && !cuentaBloqueada">{{ error }}</p>
+
+          <div class="mt-5 flex flex-col gap-3 text-center text-sm font-bold sm:flex-row sm:justify-between" *ngIf="!autenticadorPendiente">
+            <button class="text-cyan-700 dark:text-cyan-300" type="button" (click)="abrirRecuperacion()">Olvide mi contrasena</button>
+            <a routerLink="/registro" class="text-cyan-700 dark:text-cyan-300">Crear cuenta nueva</a>
+          </div>
+          <button *ngIf="autenticadorPendiente" class="mt-4 w-full text-sm font-bold text-cyan-700 dark:text-cyan-300" type="button" (click)="autenticadorPendiente = false; codigoAutenticador = ''; error = ''">Volver al inicio de sesión</button>
+        </form>
+
+        <form class="panel p-6 shadow-xl sm:p-7" (ngSubmit)="enviarRecuperacion()" *ngIf="recuperacionAbierta && pasoRecuperacion === 1">
+          <button class="boton-secundario mb-5" type="button" (click)="cerrarRecuperacion()">
+            <app-icono name="x" [size]="16"></app-icono>
+            Cancelar
+          </button>
+          <p class="text-sm font-black uppercase text-cyan-700 dark:text-cyan-300">Recuperacion</p>
+          <h2 class="mt-2 text-2xl font-black">Olvide mi contrasena</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">Ingresa el correo asociado a tu cuenta. Si esta registrado, recibiras un codigo para cambiar tu contrasena.</p>
+          <label class="mt-6 block text-sm font-bold" for="login-recuperacion-email">Correo</label>
+          <input id="login-recuperacion-email" type="email" class="campo mt-2 w-full" autocomplete="email" [(ngModel)]="recuperacionEmail" name="recuperacionEmail" required email>
+          <button class="boton-primario mt-6 w-full" type="submit" [disabled]="enviandoRecuperacion">
+            {{ enviandoRecuperacion ? 'Enviando código…' : 'Enviar código al Gmail' }}
+          </button>
+          <p class="mt-4 text-sm font-bold" [ngClass]="mensajeRecuperacionOk ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'" *ngIf="mensajeRecuperacion">{{ mensajeRecuperacion }}</p>
+        </form>
+
+        <form class="panel p-6 shadow-xl sm:p-7" (ngSubmit)="restablecer()" *ngIf="recuperacionAbierta && pasoRecuperacion === 2">
+          <p class="text-sm font-black uppercase text-cyan-700 dark:text-cyan-300">Verifica tu correo</p>
+          <h2 class="mt-2 text-2xl font-black">Nueva contrasena</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">Si el correo esta asociado a una cuenta, recibiras un codigo. Ingresalo para definir una contrasena nueva.</p>
+          <label class="mt-6 block text-sm font-bold" for="login-recuperacion-codigo">Codigo</label>
+          <input id="login-recuperacion-codigo" class="campo mt-2 w-full text-center text-xl font-black tracking-[.35rem]" maxlength="6" [(ngModel)]="codigoRecuperacion" name="codigoRecuperacion" required>
+          <label class="mt-4 block text-sm font-bold" for="login-nueva-password">Nueva contrasena</label>
+          <input id="login-nueva-password" type="password" class="campo mt-2 w-full" autocomplete="new-password" [(ngModel)]="nuevaPassword" name="nuevaPassword" required>
+          <button class="boton-primario mt-6 w-full" type="submit">Actualizar contrasena</button>
+          <button class="boton-secundario mt-3 w-full" type="button" (click)="pasoRecuperacion = 1">Cambiar correo</button>
+          <p class="mt-4 text-sm font-bold" [ngClass]="mensajeRecuperacionOk ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'" *ngIf="mensajeRecuperacion">{{ mensajeRecuperacion }}</p>
+        </form>
+      </section>
+    </main>

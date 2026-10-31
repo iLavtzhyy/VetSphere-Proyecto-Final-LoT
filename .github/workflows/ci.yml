@@ -1,0 +1,74 @@
+name: CI · VetSphere
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend · build + pruebas JUnit
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: Backend-Proyecto-Lenguajes-main/Backend-Proyecto-Lenguajes-main
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compilar y ejecutar pruebas (JaCoCo)
+        run: mvn -B verify
+
+      - name: Publicar reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-backend-jacoco
+          path: Backend-Proyecto-Lenguajes-main/Backend-Proyecto-Lenguajes-main/target/site/jacoco
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend · build Angular + pruebas Karma
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Frontend-Proyecto-Lenguajes-main/Frontend-Proyecto-Lenguajes-main
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: Frontend-Proyecto-Lenguajes-main/Frontend-Proyecto-Lenguajes-main/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar producción
+        run: npx ng build --configuration production
+
+      - name: Ejecutar pruebas (Chrome headless)
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+
+  calidad:
+    name: Calidad · verificación estructural
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verificar estructura del repositorio
+        run: python test_calidad_sistema.py

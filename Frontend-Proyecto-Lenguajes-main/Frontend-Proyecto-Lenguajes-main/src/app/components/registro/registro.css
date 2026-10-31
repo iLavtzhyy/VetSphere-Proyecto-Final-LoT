@@ -1,0 +1,47 @@
+/* =========================================================
+   VetSphere - Registro Tabs Styling
+   ========================================================= */
+
+:host {
+  --reg-primary: #0891b2;
+  --reg-border: #dce8ef;
+  --reg-card: #ffffff;
+  --reg-text: #0f172a;
+}
+
+:host-context(.dark) {
+  --reg-border: #233244;
+  --reg-card: #101b2b;
+  --reg-text: #f8fafc;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--reg-border);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.tab-buttons button {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--reg-border);
+  border-radius: 0.5rem;
+  background: var(--reg-card);
+  color: var(--reg-text);
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.tab-buttons button.activo {
+  background: var(--reg-primary) !important;
+  color: #fff !important;
+  border-color: var(--reg-primary) !important;
+}
+
+.tab-buttons button:hover:not(.activo) {
+  background: rgba(8, 145, 178, 0.05);
+}

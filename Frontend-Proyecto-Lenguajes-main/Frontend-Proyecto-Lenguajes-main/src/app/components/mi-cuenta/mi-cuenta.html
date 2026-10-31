@@ -1,0 +1,164 @@
+<section class="page-shell" @fadeInUp>
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Seguridad</p>
+      <h1 class="page-title">Mi cuenta</h1>
+      <p class="page-subtitle">Actualiza tus datos personales y administra la seguridad de tu cuenta.</p>
+    </div>
+    <button class="boton-secundario" type="button" (click)="cargarPerfil()" [disabled]="cargando">
+      <app-icono name="refresh" [size]="18"></app-icono>
+      Actualizar datos
+    </button>
+  </div>
+
+  <app-cargador *ngIf="cargando"></app-cargador>
+
+  <ng-container *ngIf="!cargando">
+    <!-- Datos del perfil -->
+    <article class="panel p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p class="page-eyebrow">Perfil</p>
+          <h2 class="section-title">Datos de la cuenta</h2>
+        </div>
+        <span class="badge badge-info" *ngIf="perfil">{{ nombreCompleto }}</span>
+      </div>
+
+      <p class="mt-4 text-sm font-bold text-rose-600 dark:text-rose-300" *ngIf="errorPerfil">{{ errorPerfil }}</p>
+
+      <form class="mt-4 grid gap-4 sm:grid-cols-2" *ngIf="perfil" (ngSubmit)="guardarPerfil()">
+        <label class="grid gap-2" for="perfil-nombres">
+          <span class="form-label">Nombres</span>
+          <input id="perfil-nombres" class="campo" name="nombresPerfil" [(ngModel)]="nombresEdicion" maxlength="80" required>
+        </label>
+        <label class="grid gap-2" for="perfil-apellidos">
+          <span class="form-label">Apellidos</span>
+          <input id="perfil-apellidos" class="campo" name="apellidosPerfil" [(ngModel)]="apellidosEdicion" maxlength="80" required>
+        </label>
+        <label class="grid gap-2" for="perfil-telefono">
+          <span class="form-label">Teléfono</span>
+          <input id="perfil-telefono" class="campo" name="telefonoPerfil" [(ngModel)]="telefonoEdicion" maxlength="30" autocomplete="tel">
+        </label>
+        <div class="grid gap-2">
+          <span class="form-label">Correo</span>
+          <div class="soft-panel break-words font-bold text-slate-950 dark:text-white">{{ perfil.email }}</div>
+        </div>
+        <div class="sm:col-span-2 flex flex-wrap items-center gap-3">
+          <button class="boton-primario" type="submit" [disabled]="guardandoPerfil">
+            {{ guardandoPerfil ? 'Guardando…' : 'Guardar cambios' }}
+          </button>
+          <span class="text-sm font-bold text-rose-600 dark:text-rose-300" *ngIf="errorPerfil">{{ errorPerfil }}</span>
+          <span class="text-sm font-bold text-emerald-700 dark:text-emerald-300" *ngIf="mensajePerfil">{{ mensajePerfil }}</span>
+        </div>
+      </form>
+
+      <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" *ngIf="perfil">
+        <div class="soft-panel">
+          <p class="form-label">Roles</p>
+          <div class="mt-1 flex flex-wrap gap-1.5">
+            <span class="badge badge-info" *ngFor="let rol of rolesLegibles">{{ rol }}</span>
+            <span class="badge badge-warn" *ngIf="!rolesLegibles.length">Sin rol asignado</span>
+          </div>
+        </div>
+        <div class="soft-panel">
+          <p class="form-label">Ultimo acceso</p>
+          <p class="mt-1 font-black text-slate-950 dark:text-white">{{ formatearFecha(perfil.ultimoAcceso) }}</p>
+        </div>
+        <div class="soft-panel">
+          <p class="form-label">Verificacion del correo</p>
+          <div class="mt-1 flex flex-wrap gap-1.5">
+            <span class="badge badge-ok" *ngIf="perfil.emailVerificado">Correo verificado</span>
+            <span class="badge badge-warn" *ngIf="!perfil.emailVerificado">Correo sin verificar</span>
+          </div>
+        </div>
+        <div class="soft-panel">
+          <p class="form-label">Estado de la cuenta</p>
+          <div class="mt-1 flex flex-wrap gap-1.5">
+            <span class="badge badge-danger" *ngIf="perfil.bloqueado">Bloqueada hasta {{ formatearFecha(perfil.bloqueadoHasta) }}</span>
+            <span class="badge badge-ok" *ngIf="!perfil.bloqueado && perfil.activo">Activa</span>
+            <span class="badge badge-warn" *ngIf="!perfil.bloqueado && !perfil.activo">Desactivada</span>
+          </div>
+        </div>
+        <div class="soft-panel">
+          <p class="form-label">Intentos fallidos</p>
+          <p class="mt-1 font-black text-slate-950 dark:text-white">{{ perfil.intentosFallidos || 0 }}</p>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400" *ngIf="perfil.motivoBloqueo">Motivo del bloqueo: {{ perfil.motivoBloqueo }}</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel p-5" *ngIf="perfil">
+      <p class="page-eyebrow">Seguridad adicional</p>
+      <h2 class="section-title">Verificación en dos pasos</h2>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Usa Google Authenticator, Microsoft Authenticator o Authy para generar códigos de acceso.</p>
+      <div *ngIf="!perfil.autenticadorHabilitado && !qrAutenticador" class="mt-4"><button class="boton-primario" type="button" (click)="configurarAutenticador()">Configurar autenticador</button></div>
+      <div *ngIf="qrAutenticador" class="mt-4 grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
+        <img [src]="qrAutenticador" alt="Código QR para configurar autenticador" class="h-48 w-48 rounded-xl border border-slate-200 bg-white p-2">
+        <div><p class="font-bold">Escanea el QR y confirma con el código que aparece en la aplicación.</p><p class="mt-2 break-all text-xs text-slate-500">Clave manual: {{ secretoAutenticador }}</p><div class="mt-3 flex gap-2"><input class="campo max-w-48" inputmode="numeric" maxlength="6" [(ngModel)]="codigoAutenticador" name="codigoTOTPActivo" placeholder="Código de 6 dígitos"><button class="boton-primario" type="button" (click)="activarAutenticador()">Activar</button></div></div>
+      </div>
+      <div *ngIf="perfil.autenticadorHabilitado" class="mt-4 flex flex-wrap items-end gap-3"><span class="badge badge-ok">Autenticador activo</span><input class="campo max-w-48" type="password" [(ngModel)]="passwordAutenticador" name="passwordTOTP" placeholder="Contraseña actual"><input class="campo max-w-48" inputmode="numeric" maxlength="6" [(ngModel)]="codigoAutenticador" name="codigoTOTPDesactivar" placeholder="Código actual"><button class="boton-peligro" type="button" (click)="desactivarAutenticador()">Desactivar</button></div>
+      <div class="mt-6 border-t border-slate-200 pt-5 dark:border-slate-700">
+        <h3 class="font-bold">Código por correo</h3>
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Al iniciar sesión puedes recibir un código de un solo uso en el correo verificado de tu cuenta.</p>
+        <p class="mt-2 text-sm font-bold" [ngClass]="perfil.segundoFactorCorreoHabilitado ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500'">{{ perfil.segundoFactorCorreoHabilitado ? 'Activo' : 'Desactivado' }}</p>
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <input class="campo max-w-64" type="password" [(ngModel)]="passwordSegundoFactor" name="passwordFactorCorreo" placeholder="Confirma tu contraseña">
+          <button class="boton-secundario" type="button" (click)="configurarSegundoFactorCorreo(!perfil.segundoFactorCorreoHabilitado)">
+            {{ perfil.segundoFactorCorreoHabilitado ? 'Desactivar correo' : 'Activar código por correo' }}
+          </button>
+        </div>
+      </div>
+      <div class="mt-6 border-t border-slate-200 pt-5 dark:border-slate-700">
+        <h3 class="font-bold">Códigos de respaldo</h3>
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Genera 10 códigos de un solo uso para entrar si no tienes tu autenticador o correo. Se guardan cifrados y solo se muestran una vez.</p>
+        <p class="mt-2 text-sm font-bold text-cyan-800 dark:text-cyan-200">{{ perfil.codigosRespaldoRestantes || 0 }} códigos disponibles</p>
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <input class="campo max-w-64" type="password" [(ngModel)]="passwordSegundoFactor" name="passwordCodigosRespaldo" placeholder="Confirma tu contraseña">
+          <button class="boton-secundario" type="button" (click)="generarCodigosRespaldo()" [disabled]="!perfil.autenticadorHabilitado && !perfil.segundoFactorCorreoHabilitado">{{ perfil.codigosRespaldoRestantes ? 'Renovar códigos' : 'Generar códigos' }}</button>
+        </div>
+        <p *ngIf="!perfil.autenticadorHabilitado && !perfil.segundoFactorCorreoHabilitado" class="mt-2 text-sm text-slate-500 dark:text-slate-400">Activa primero el autenticador o la verificación por correo para generar códigos de respaldo.</p>
+        <div *ngIf="codigosRespaldoNuevos.length" class="mt-3 grid gap-3">
+          <textarea class="campo min-h-32 w-full font-mono" [value]="codigosRespaldoNuevos.join('\n')" readonly aria-label="Códigos de respaldo nuevos"></textarea>
+          <div class="flex flex-wrap items-center gap-3">
+            <button class="boton-primario" type="button" (click)="descargarCodigosRespaldo()">Descargar códigos (.txt)</button>
+            <span class="text-sm text-slate-600 dark:text-slate-300">Guarda el archivo en un lugar seguro.</span>
+          </div>
+        </div>
+        <p *ngIf="codigosRespaldoNuevos.length" class="mt-2 text-sm font-bold text-amber-700 dark:text-amber-300">Guárdalos ahora en un lugar seguro; no volverán a mostrarse.</p>
+      </div>
+      <p *ngIf="errorAutenticador" class="mt-3 text-sm font-bold text-rose-600">{{ errorAutenticador }}</p>
+    </article>
+
+    <!-- Cambio de contrasena -->
+    <article class="panel p-5">
+      <p class="page-eyebrow">Credenciales</p>
+      <h2 class="section-title">Cambiar contrasena</h2>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">La nueva contrasena debe tener al menos 8 caracteres y coinciden con su confirmacion.</p>
+
+      <form class="mt-4 grid gap-4" (ngSubmit)="cambiarPassword()">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="grid gap-2" for="mi-cuenta-password-actual">
+            <span class="form-label">Contrasena actual</span>
+            <input id="mi-cuenta-password-actual" class="campo" type="password" name="passwordActual" autocomplete="current-password" [(ngModel)]="passwordActual" required>
+          </label>
+          <label class="grid gap-2" for="mi-cuenta-nueva-password">
+            <span class="form-label">Nueva contrasena</span>
+            <input id="mi-cuenta-nueva-password" class="campo" type="password" name="nuevaPassword" autocomplete="new-password" minlength="8" [(ngModel)]="nuevaPassword" required>
+          </label>
+        </div>
+        <label class="grid gap-2" for="mi-cuenta-confirmar-password">
+          <span class="form-label">Confirmar nueva contrasena</span>
+          <input id="mi-cuenta-confirmar-password" class="campo" type="password" name="confirmarPassword" autocomplete="new-password" minlength="8" [(ngModel)]="confirmarPassword" required>
+        </label>
+        <p class="text-sm font-bold text-rose-600 dark:text-rose-300" *ngIf="errorPassword">{{ errorPassword }}</p>
+        <p class="text-sm font-bold text-emerald-700 dark:text-emerald-300" *ngIf="mensajePassword">{{ mensajePassword }}</p>
+        <div>
+          <button class="boton-primario font-black" type="submit" [disabled]="procesandoPassword">
+            {{ procesandoPassword ? 'Actualizando…' : 'Actualizar contrasena' }}
+          </button>
+        </div>
+      </form>
+    </article>
+
+  </ng-container>
+</section>

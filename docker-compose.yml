@@ -1,0 +1,104 @@
+# ── VetSphere · Stack completo con Docker ──────────────────────────────────
+# Uso:
+#   docker compose up -d --build          → SQL Server + backend + frontend
+#   docker compose --profile soap up -d   → añade el mini servicio SOAP
+#   docker compose down -v                → para todo y borra los datos
+#
+# Los valores por defecto se pueden sobreescribir en el archivo .env de esta
+# misma carpeta (docker compose lo lee automáticamente).
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: vetsphere-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-VetSphere#2026}
+    ports:
+      - "${DB_PORT:-11433}:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+      - ./docker/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  backend:
+    build:
+      context: ./Backend-Proyecto-Lenguajes-main/Backend-Proyecto-Lenguajes-main
+    container_name: vetsphere-backend
+    ports:
+      - "${BACKEND_PORT:-18080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_URL: jdbc:sqlserver://db:1433;databaseName=VeterinariaDB;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: sa
+      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-VetSphere#2026}
+      JWT_SECRET: ${JWT_SECRET:-cambiar-esta-clave-en-produccion-0123456789abcdefghij}
+      SOAP_USERNAME: ${SOAP_USERNAME:-vetsphere-docker}
+      SOAP_PASSWORD: ${SOAP_PASSWORD:-SoapDocker2026}
+      ADMIN_REGISTRATION_CODE: ${ADMIN_REGISTRATION_CODE:-VET-ADMIN-2026}
+      DEMO_SEED_PASSWORD: ${DEMO_SEED_PASSWORD:-Demo2026!}
+      PICHINCHA_NUMERO_CUENTA: ${PICHINCHA_NUMERO_CUENTA:-}
+      PICHINCHA_TITULAR: ${PICHINCHA_TITULAR:-}
+      PICHINCHA_IDENTIFICACION: ${PICHINCHA_IDENTIFICACION:-}
+      CHAT_BASE_URL: ${CHAT_BASE_URL:-https://codecraftapi.com/v1}
+      CHAT_API_KEY: ${CHAT_API_KEY:-}
+      CHAT_MODEL: ${CHAT_MODEL:-gemini-3.6-flash}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  cold-chain-iot:
+    build:
+      context: ./iot-cadena-frio
+    container_name: vetsphere-cold-chain-iot
+    ports:
+      - "${IOT_PORT:-18091}:8091"
+    environment:
+      DB_URL: jdbc:sqlserver://db:1433;databaseName=VeterinariaDB;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: sa
+      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-VetSphere#2026}
+      JWT_SECRET: ${JWT_SECRET:-cambiar-esta-clave-en-produccion-0123456789abcdefghij}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:14200}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./Frontend-Proyecto-Lenguajes-main/Frontend-Proyecto-Lenguajes-main
+    container_name: vetsphere-frontend
+    ports:
+      - "${FRONTEND_PORT:-14200}:80"
+    depends_on:
+      - backend
+      - cold-chain-iot
+
+  # Mini servicio SOAP (opcional): docker compose --profile soap up -d --build
+  soap:
+    profiles: ["soap"]
+    build:
+      context: ./MiniProyecto-SOAP-master/MiniProyecto-SOAP-master
+    container_name: vetsphere-soap
+    ports:
+      - "${SOAP_PORT:-18090}:8090"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_URL: jdbc:sqlserver://db:1433;databaseName=VeterinariaMiniDB;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: sa
+      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-VetSphere#2026}
+      VETSPHERE_SOAP_URL: http://backend:8080/soap/productos
+      SOAP_USERNAME: ${SOAP_USERNAME:-vetsphere-docker}
+      SOAP_PASSWORD: ${SOAP_PASSWORD:-SoapDocker2026}
+      APP_API_TOKEN: ${APP_API_TOKEN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+
+volumes:
+  mssql-data:

@@ -1,0 +1,79 @@
+/* =========================================================
+   VetSphere - Administracion Panel Code Badge Styling
+   ========================================================= */
+
+:host {
+  --admin-primary: #0891b2;
+  --admin-border: #dce8ef;
+  --admin-text: #0f172a;
+  --admin-muted: #64748b;
+  display: block;
+}
+
+:host-context(.dark) {
+  --admin-border: #233244;
+  --admin-text: #f8fafc;
+  --admin-muted: #94a3b8;
+}
+
+.codigo-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 1.25rem 0;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid rgba(8, 145, 178, .2);
+  border-radius: 1.1rem;
+  background: linear-gradient(115deg, #f0fbff 0%, #f8fbff 58%, #effcf8 100%);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+}
+
+.codigo-titulo {
+  font-weight: 950;
+  font-size: 1.1rem;
+  color: var(--admin-primary);
+  margin: 0;
+}
+
+.codigo-desc {
+  font-size: 0.85rem;
+  color: var(--admin-muted);
+  margin: 0.25rem 0 0 0;
+}
+
+.codigo-badge {
+  display: grid;
+  min-width: 9.5rem;
+  min-height: 3.4rem;
+  place-items: center;
+  padding: .45rem .85rem;
+  border: 1px solid #c9e7f0;
+  border-radius: .8rem;
+  background: #fff;
+  color: #0f3550;
+  font-family: monospace;
+  font-size: 1.55rem;
+  font-weight: 950;
+  letter-spacing: .3em;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.codigo-control { display: grid; justify-items: center; gap: .4rem; }
+.codigo-revelar { padding: .25rem .65rem; border-radius: .5rem; color: #087f98; font-size: .75rem; font-weight: 800; }
+.codigo-revelar:hover:not(:disabled) { background: rgba(8, 145, 178, .08); }
+.codigo-revelar:disabled { cursor: wait; opacity: .5; }
+.codigo-tiempo { display: flex; align-items: center; gap: .55rem; color: var(--admin-muted); white-space: nowrap; }
+.codigo-tiempo b { color: var(--admin-text); }
+.codigo-punto { width: .55rem; height: .55rem; border-radius: 50%; background: #10b981; box-shadow: 0 0 0 4px rgba(16, 185, 129, .12); }
+:host-context(.dark) .codigo-box { border-color: #1d5264; background: linear-gradient(115deg, #10283a, #102b31); }
+:host-context(.dark) .codigo-badge { border-color: #315165; background: #0b1724; color: #e0f2fe; }
+@media (max-width: 720px) {
+  .codigo-box { grid-template-columns: 1fr auto; padding: 1rem; gap: .8rem; }
+  .codigo-tiempo { grid-column: 1 / -1; }
+}
+@media (max-width: 460px) {
+  .codigo-box { grid-template-columns: 1fr; }
+  .codigo-control { justify-items: start; }
+}

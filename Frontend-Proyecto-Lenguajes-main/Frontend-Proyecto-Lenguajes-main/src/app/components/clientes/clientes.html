@@ -1,0 +1,195 @@
+    <section class="page-shell" @fadeInUp>
+      <div class="page-header">
+        <div>
+          <p class="page-eyebrow">Gestion de propietarios</p>
+          <h1 class="page-title">Clientes</h1>
+          <p class="page-subtitle">Propietarios, mascotas asociadas, contacto y gasto acumulado dentro de la clinica.</p>
+        </div>
+        <button class="boton-primario" (click)="abrirNuevoCliente()">Nuevo cliente</button>
+      </div>
+
+      <app-cargador *ngIf="cargando"></app-cargador>
+
+      <ng-container *ngIf="!cargando">
+      <div class="grid gap-4 md:grid-cols-4">
+        <article class="stat-card"><p class="stat-label">Clientes</p><p class="stat-value">{{ clientes.length }}</p><p class="stat-note">Propietarios</p></article>
+        <article class="stat-card"><p class="stat-label">Mascotas</p><p class="stat-value">{{ totalMascotas }}</p><p class="stat-note">Pacientes asociados</p></article>
+        <article class="stat-card"><p class="stat-label">Gasto total</p><p class="stat-value">${{ totalGastado | number:'1.2-2' }}</p><p class="stat-note">Facturacion historica</p></article>
+        <article class="stat-card"><p class="stat-label">Activos</p><p class="stat-value">{{ activos }}</p><p class="stat-note">Con seguimiento</p></article>
+      </div>
+
+      <div class="panel p-4">
+        <label class="sr-only" for="clientes-busqueda">Buscar clientes</label>
+        <input id="clientes-busqueda" class="campo w-full max-w-xl" placeholder="Buscar por nombre, cédula, email o teléfono..." aria-label="Buscar cliente por nombre, número de cédula, correo o teléfono" [(ngModel)]="busqueda">
+      </div>
+
+      <div class="table-wrap overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr><th>Cliente</th><th>Email</th><th>Telefono</th><th>Mascotas</th><th>Gastado</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let cliente of filtrados">
+              <td>
+                <div class="font-black text-slate-950 dark:text-white">{{ cliente.nombres }} {{ cliente.apellidos }}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">{{ cliente.documento || 'Sin documento' }}</div>
+              </td>
+              <td>{{ cliente.email }}</td>
+              <td>{{ cliente.telefono }}</td>
+              <td><span class="badge badge-info">{{ cliente.mascotas?.length || 0 }} mascotas</span></td>
+              <td class="font-black text-emerald-700 dark:text-emerald-300">${{ cliente.totalGastado || 0 | number:'1.2-2' }}</td>
+              <td><span class="badge badge-ok">{{ cliente.estado || 'Activo' }}</span></td>
+              <td class="space-x-3">
+                <button class="action-link" (click)="abrirDetallesCliente(cliente)">Ver</button>
+                <button class="action-link" (click)="abrirEditarCliente(cliente)">Editar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      </ng-container>
+    </section>
+
+    <!-- Modal Nuevo/Editar Cliente -->
+    <div class="modal-comprobante" *ngIf="mostrarFormCliente" (click)="cerrarFormCliente()">
+      <section class="comprobante-card" (click)="$event.stopPropagation()" style="max-width: 520px;">
+        <header class="comprobante-header">
+          <div class="comprobante-brand">
+            <span>VS</span>
+            <div>
+              <h2>{{ esNuevo ? 'Nuevo Cliente' : 'Editar Cliente' }}</h2>
+              <p>{{ esNuevo ? 'Registrar un nuevo propietario en la clínica' : 'Modificar los datos del propietario' }}</p>
+            </div>
+          </div>
+          <button class="boton-icono" type="button" aria-label="Cerrar" (click)="cerrarFormCliente()">
+            <svg xmlns="https://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </header>
+
+        <div class="comprobante-body" style="padding: 1.5rem; display: grid; gap: 1rem;">
+          <form (ngSubmit)="guardarCliente()" style="display: grid; gap: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <label style="display: grid; gap: 0.25rem;" for="clientes-nombres">
+                <span class="form-label text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Nombres *</span>
+                <input id="clientes-nombres" class="campo" type="text" name="nombres" [(ngModel)]="clienteEdicion.nombres" required placeholder="Ej. Juan">
+              </label>
+              <label style="display: grid; gap: 0.25rem;" for="clientes-apellidos">
+                <span class="form-label text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Apellidos *</span>
+                <input id="clientes-apellidos" class="campo" type="text" name="apellidos" [(ngModel)]="clienteEdicion.apellidos" required placeholder="Ej. Pérez">
+              </label>
+            </div>
+
+            <label style="display: grid; gap: 0.25rem;" for="clientes-documento">
+              <span class="form-label text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Número de cédula {{ esNuevo ? '*' : '' }}</span>
+              <input id="clientes-documento" class="campo" type="text" name="documento" [(ngModel)]="clienteEdicion.documento" placeholder="10 dígitos, ej. 1712345678" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" [required]="esNuevo">
+            </label>
+
+            <label style="display: grid; gap: 0.25rem;" for="clientes-email">
+              <span class="form-label text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Correo Electrónico *</span>
+              <input id="clientes-email" class="campo" type="email" name="email" [(ngModel)]="clienteEdicion.email" required placeholder="Ej. juan@correo.com" [disabled]="!esNuevo">
+            </label>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <label style="display: grid; gap: 0.25rem;" for="clientes-telefono">
+                <span class="form-label text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Teléfono</span>
+                <input id="clientes-telefono" class="campo" type="text" name="telefono" [(ngModel)]="clienteEdicion.telefono" placeholder="Ej. 0987654321">
+              </label>
+              <label style="display: grid; gap: 0.25rem;" for="clientes-ciudad">
+                <span class="form-label text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Dirección / Calles (Quito)</span>
+                <input id="clientes-ciudad" class="campo" type="text" name="ciudad" [(ngModel)]="clienteEdicion.ciudad" placeholder="Ej. Av. Colón E10-45 y 12 de Octubre, Quito">
+              </label>
+            </div>
+
+            <label style="display: grid; gap: 0.25rem;" *ngIf="!esNuevo" for="clientes-estado">
+              <span class="form-label text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Estado</span>
+              <select id="clientes-estado" class="campo" name="estado" [(ngModel)]="clienteEdicion.estado">
+                <option>Activo</option>
+                <option>Inactivo</option>
+              </select>
+            </label>
+
+            <button class="boton-primario w-full font-black" type="submit" style="padding: 0.75rem; font-size: 0.95rem; margin-top: 0.5rem;">
+              {{ esNuevo ? 'Registrar Propietario' : 'Guardar Cambios' }}
+            </button>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <!-- Modal Ver Detalles de Cliente -->
+    <div class="modal-comprobante" *ngIf="clienteDetalles as cliente" (click)="cerrarDetallesCliente()">
+      <section class="comprobante-card" (click)="$event.stopPropagation()" style="max-width: 600px;">
+        <header class="comprobante-header">
+          <div class="comprobante-brand">
+            <span>VS</span>
+            <div>
+              <h2>Detalles del Cliente</h2>
+              <p>{{ cliente.nombres }} {{ cliente.apellidos }}</p>
+            </div>
+          </div>
+          <button class="boton-icono" type="button" aria-label="Cerrar" (click)="cerrarDetallesCliente()">
+            <svg xmlns="https://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </header>
+
+        <div class="comprobante-body" style="padding: 1.5rem; display: grid; gap: 1rem;">
+          <div class="comprobante-info">
+            <article>
+              <span>Documento</span>
+              <strong>{{ cliente.documento || 'Sin documento' }}</strong>
+            </article>
+            <article>
+              <span>Email</span>
+              <strong>{{ cliente.email }}</strong>
+            </article>
+            <article>
+              <span>Teléfono</span>
+              <strong>{{ cliente.telefono || 'Sin teléfono' }}</strong>
+            </article>
+            <article>
+              <span>Ciudad</span>
+              <strong>{{ cliente.ciudad || 'Quito' }}</strong>
+            </article>
+            <article>
+              <span>Estado</span>
+              <strong style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem;">
+                <span class="badge" [ngClass]="(cliente.estado || 'Activo') === 'Activo' ? 'badge-ok' : 'badge-warn'" style="padding: 0.25rem 0.5rem;">
+                  {{ cliente.estado || 'Activo' }}
+                </span>
+              </strong>
+            </article>
+            <article>
+              <span>Gasto Acumulado</span>
+              <strong class="text-emerald-700 dark:text-emerald-300 font-black">${{ cliente.totalGastado || 0 | number:'1.2-2' }}</strong>
+            </article>
+          </div>
+
+          <div style="border-top: 1px solid var(--factura-border); margin-top: 0.5rem; padding-top: 1rem;">
+            <h3 class="form-label text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-3" style="margin-bottom: 0.75rem;">Mascotas registradas ({{ cliente.mascotas?.length || 0 }})</h3>
+            
+            <div *ngIf="cliente.mascotas && cliente.mascotas.length > 0; else sinMascotas" style="display: grid; gap: 0.75rem; max-height: 200px; overflow-y: auto;">
+              <div *ngFor="let mascota of cliente.mascotas" 
+                   style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border: 1px solid var(--factura-border); border-radius: 0.5rem; background: var(--factura-bg);">
+                <div>
+                  <strong style="color: var(--factura-text); display: block;">{{ mascota.nombre }}</strong>
+                  <span style="color: var(--factura-muted); font-size: 0.75rem;">{{ mascota.especie }} - {{ mascota.raza }}</span>
+                </div>
+                <span class="badge badge-info">{{ mascota.sexo }}</span>
+              </div>
+            </div>
+            <ng-template #sinMascotas>
+              <p style="color: var(--factura-muted); font-size: 0.85rem; text-align: center; padding: 1rem 0;">No tiene mascotas asociadas.</p>
+            </ng-template>
+          </div>
+        </div>
+        
+        <footer class="comprobante-footer" style="background: var(--factura-bg); border-top: 1px solid var(--factura-border); display: flex; justify-content: flex-end; padding: 1rem 1.5rem;">
+          <button class="boton-secundario" type="button" (click)="cerrarDetallesCliente()">Cerrar</button>
+          <button class="boton-primario" type="button" (click)="abrirEditarCliente(cliente); cerrarDetallesCliente()" style="margin-left: 0.5rem;">Editar Cliente</button>
+        </footer>
+      </section>
+    </div>

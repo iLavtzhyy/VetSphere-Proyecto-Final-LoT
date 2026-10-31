@@ -1,0 +1,13 @@
+    <main class="grid min-h-screen place-items-center bg-slate-50 p-4 text-slate-950 dark:bg-[#07111f] dark:text-white">
+      <form class="panel w-full max-w-md p-6 text-center shadow-xl sm:p-7" (ngSubmit)="verificar()">
+        <p class="text-sm font-black uppercase text-cyan-700 dark:text-cyan-300">Segundo paso</p>
+        <h1 class="mt-2 text-2xl font-black">Verifica tu correo</h1>
+        <p class="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">Ingresa el codigo enviado a {{ emailEnmascarado }}.</p>
+        <label class="sr-only" for="verificar-codigo">Codigo de verificacion</label>
+        <input id="verificar-codigo" class="campo mt-8 w-full text-center text-2xl font-black tracking-[.45rem]" maxlength="6" [(ngModel)]="codigo" name="codigo" required>
+        <button class="boton-primario mt-6 w-full" type="submit">Verificar y entrar</button>
+        <button class="boton-secundario mt-3 w-full" type="button" (click)="reenviar()">Reenviar codigo</button>
+        <a routerLink="/login" class="mt-4 block text-sm font-bold text-cyan-700 dark:text-cyan-300">Volver al login</a>
+        <p class="mt-4 text-sm font-bold" [ngClass]="ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'" *ngIf="mensaje">{{ mensaje }}</p>
+      </form>
+    </main>

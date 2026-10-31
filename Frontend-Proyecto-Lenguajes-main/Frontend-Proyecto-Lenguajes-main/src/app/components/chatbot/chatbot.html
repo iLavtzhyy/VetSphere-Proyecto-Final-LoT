@@ -1,0 +1,161 @@
+<!-- Botón flotante: burbuja de chat -->
+<button type="button"
+        class="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-cyan-700 text-white shadow-suave transition hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-400 dark:bg-cyan-600 dark:hover:bg-cyan-500"
+        (click)="alternar()" [attr.aria-expanded]="abierto" aria-label="Abrir asistente VetSphere">
+  @if (abierto) {
+    <svg [style.width.px]="24" [style.height.px]="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <path d="m18 6-12 12" /><path d="m6 6 12 12" />
+    </svg>
+  } @else {
+    <svg [style.width.px]="24" [style.height.px]="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  }
+</button>
+
+<!-- Ventana tipo mensajería -->
+@if (abierto) {
+  <section class="fixed bottom-24 right-6 z-50 flex max-h-[70vh] w-[360px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-[#0b1422]"
+           role="dialog" aria-label="Asistente VetSphere">
+    <header class="flex items-center justify-between gap-3 border-b border-cyan-800 bg-cyan-700 px-4 py-3 text-white dark:border-slate-700 dark:bg-cyan-800">
+      <div class="flex min-w-0 items-center gap-2">
+        <svg [style.width.px]="20" [style.height.px]="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+        <div class="min-w-0">
+          <p class="truncate text-sm font-black">Asistente VetSphere</p>
+          <p class="truncate text-[11px] text-cyan-100">Consultas en vivo y ayuda con tareas</p>
+        </div>
+      </div>
+      <div class="flex shrink-0 items-center gap-1">
+      @if (esAdmin) {
+        <button type="button" class="rounded-lg border border-white/30 px-2 py-1 text-[10px] font-bold transition hover:bg-white/15" (click)="panelAdmin ? cerrarPanelAdmin() : abrirPanelAdmin()" aria-label="Abrir historial administrativo">
+          {{ panelAdmin ? 'Volver al chat' : 'Historial' }}
+        </button>
+      }
+      <button type="button" class="rounded-lg p-1 transition hover:bg-white/15" (click)="cerrar()" aria-label="Cerrar asistente">
+        <svg [style.width.px]="18" [style.height.px]="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="m18 6-12 12" /><path d="m6 6 12 12" />
+        </svg>
+      </button>
+      </div>
+    </header>
+
+    <div #cajaMensajes class="chat-scroll flex-1 space-y-3 overflow-y-auto px-4 py-3">
+      @if (panelAdmin && !conversacionAdmin) {
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-black text-slate-900 dark:text-white">Conversaciones</h3>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] text-slate-500">{{ conversacionesAdmin.length }} registros</span>
+              <button type="button" (click)="eliminarTodoHistorialAdmin()" [disabled]="eliminandoHistorial || !conversacionesAdmin.length"
+                class="rounded-lg border border-rose-200 px-2 py-1 text-[10px] font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-40 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950/40">
+                {{ eliminandoHistorial ? 'Eliminando…' : 'Eliminar todo' }}
+              </button>
+            </div>
+          </div>
+          @if (mensajeAdmin) { <p role="status" class="rounded-lg bg-cyan-50 px-2 py-1 text-xs text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200">{{ mensajeAdmin }}</p> }
+          <p class="text-[10px] text-slate-500">El historial se elimina automáticamente después de 7 días.</p>
+          @if (cargandoHistorialAdmin) {
+            <p class="py-6 text-center text-xs text-slate-500">Cargando historial…</p>
+          } @else if (!conversacionesAdmin.length) {
+            <p class="py-6 text-center text-xs text-slate-500">Todavía no hay conversaciones.</p>
+          }
+          @for (conversacion of conversacionesAdmin; track conversacion.id) {
+            <div class="flex items-center gap-2 rounded-xl border border-slate-200 p-2 dark:border-slate-700">
+              <button type="button" (click)="verConversacionAdmin(conversacion.id)" class="min-w-0 flex-1 rounded-lg p-1 text-left hover:bg-cyan-50/60 dark:hover:bg-slate-800">
+                <span class="block truncate text-xs font-bold text-slate-900 dark:text-white">{{ conversacion.titulo }}</span>
+                <span class="mt-1 block truncate text-[10px] text-slate-600 dark:text-slate-300">{{ conversacion.nombreUsuario }} · {{ conversacion.usuarioEmail }}</span>
+                <span class="mt-1 block text-[10px] text-slate-500">{{ conversacion.actualizadoEn | date:'short' }} · {{ conversacion.cantidadMensajes }} mensajes</span>
+              </button>
+              <button type="button" (click)="eliminarConversacionAdmin(conversacion.id, $event)" class="shrink-0 rounded-lg px-2 py-2 text-[10px] font-bold text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40" [attr.aria-label]="'Eliminar conversación de ' + conversacion.nombreUsuario">Eliminar</button>
+            </div>
+          }
+        </div>
+      } @else if (panelAdmin && conversacionAdmin) {
+        <div class="space-y-3">
+          <button type="button" (click)="volverAConversaciones()" class="text-xs font-bold text-cyan-700 dark:text-cyan-300">← Todas las conversaciones</button>
+          <button type="button" (click)="eliminarConversacionAdmin(conversacionAdmin.id)" class="ml-3 text-xs font-bold text-rose-700 dark:text-rose-300">Eliminar conversación</button>
+          @if (mensajeAdmin) { <p role="status" class="text-xs text-cyan-700 dark:text-cyan-200">{{ mensajeAdmin }}</p> }
+          <div class="rounded-xl bg-slate-100 p-3 text-xs dark:bg-slate-800">
+            <p class="font-bold">{{ conversacionAdmin.nombreUsuario }}</p>
+            <p>{{ conversacionAdmin.usuarioEmail }}</p>
+            <p class="mt-1 text-slate-500">{{ conversacionAdmin.titulo }}</p>
+          </div>
+          @for (mensaje of conversacionAdmin.mensajes; track $index) {
+            <div [class]="mensaje.rol === 'user' ? 'flex justify-end' : 'flex justify-start'">
+              <p class="max-w-[88%] whitespace-pre-wrap rounded-xl px-3 py-2 text-xs"
+                 [ngClass]="mensaje.rol === 'user'
+                   ? 'bg-cyan-700 text-white'
+                   : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-100'">{{ mensaje.contenido }}</p>
+            </div>
+          }
+        </div>
+      } @else {
+      <p class="text-center text-[10px] text-slate-400">El historial se conserva durante 7 días.</p>
+      @if (!mensajes.length) {
+        <p class="rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          ¡Hola! {{ descripcionCapacidades }} Escribe “ayuda” para ver tus permisos.
+        </p>
+      }
+      @for (mensaje of mensajes; track $index) {
+        @if (mensaje.rol === 'user') {
+          <div class="flex justify-end">
+            <p class="max-w-[80%] break-words whitespace-pre-wrap rounded-2xl rounded-br-sm bg-cyan-700 px-3 py-2 text-sm text-white dark:bg-cyan-600">{{ mensaje.contenido }}</p>
+          </div>
+        } @else {
+          <div class="flex justify-start">
+            <p [class]="mensaje.error
+              ? 'max-w-[80%] break-words whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/60 dark:text-rose-200'
+              : 'max-w-[80%] break-words whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-slate-100 px-3 py-2 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-100'">{{ mensaje.contenido }}</p>
+          </div>
+        }
+      }
+      @if (pasoCupon === 'confirmacion') {
+        <div class="flex gap-2 pl-1">
+          <button type="button" (click)="confirmarCreacionCupon(true)" [disabled]="enviando" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50">Confirmar creación</button>
+          <button type="button" (click)="confirmarCreacionCupon(false)" [disabled]="enviando" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-50 dark:border-slate-600 dark:text-slate-200">Cancelar</button>
+        </div>
+      }
+      @if (enviando) {
+        <div class="flex justify-start">
+          <p class="rounded-2xl rounded-bl-sm bg-slate-100 px-3 py-2 text-sm italic text-slate-500 dark:bg-slate-800 dark:text-slate-400">escribiendo…</p>
+        </div>
+      }
+      }
+    </div>
+
+    @if (!panelAdmin) {
+    <footer class="flex items-end gap-2 border-t border-slate-200 p-3 dark:border-slate-700">
+      <textarea #entradaTexto rows="1" [(ngModel)]="texto"
+                (input)="ajustarAltura($event)" (keydown.enter)="presionarEnter($event)"
+                placeholder="Escribe tu consulta…"
+                aria-label="Mensaje para el asistente"
+                class="chat-scroll max-h-[120px] min-h-[2.5rem] flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-600 focus:outline-none focus:ring-1 focus:ring-cyan-600 dark:border-slate-600 dark:bg-[#07111f] dark:text-slate-100"></textarea>
+      <button type="button" (click)="enviar()" [disabled]="enviando || !texto.trim()"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-700 text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-cyan-600 dark:hover:bg-cyan-500"
+              aria-label="Enviar mensaje">
+        <svg [style.width.px]="18" [style.height.px]="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" />
+        </svg>
+      </button>
+    </footer>
+    }
+
+    @if (modalBorrado) {
+      <div class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/55 p-4" role="presentation" (click)="cancelarBorrado()">
+        <section role="alertdialog" aria-modal="true" aria-labelledby="confirmar-borrado-titulo"
+          class="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+          (click)="$event.stopPropagation()">
+          <p class="text-xs font-black uppercase tracking-wide text-rose-700 dark:text-rose-300">Confirmar eliminación</p>
+          <h3 id="confirmar-borrado-titulo" class="mt-2 text-base font-black">{{ modalBorrado.tipo === 'todo' ? '¿Eliminar todo el historial?' : '¿Eliminar esta conversación?' }}</h3>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Se borrarán permanentemente {{ modalBorrado.tipo === 'todo' ? 'todas las conversaciones y sus mensajes' : 'esta conversación y todos sus mensajes' }}. Esta acción no se puede deshacer.</p>
+          <div class="mt-5 flex justify-end gap-2">
+            <button type="button" (click)="cancelarBorrado()" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800">Cancelar</button>
+            <button type="button" (click)="confirmarBorrado()" class="rounded-xl bg-rose-700 px-4 py-2 text-sm font-bold text-white hover:bg-rose-800">Eliminar</button>
+          </div>
+        </section>
+      </div>
+    }
+  </section>
+}

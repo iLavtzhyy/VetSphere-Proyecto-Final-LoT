@@ -1,0 +1,73 @@
+<main class="grid min-h-screen place-items-center bg-slate-50 p-4 text-slate-950 dark:bg-[#07111f] dark:text-white">
+  
+  <!-- Formulario de Registro -->
+  <form class="panel w-full max-w-lg p-6 shadow-xl sm:p-7" (ngSubmit)="registrar()" *ngIf="!solicitudEnviada">
+    <p class="text-sm font-black uppercase text-cyan-700 dark:text-cyan-300">Nuevo usuario</p>
+    <h1 class="mt-2 text-2xl font-black">Registro con verificacion</h1>
+    <p class="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+      {{ tipoRegistro === 'cliente' ? 'El codigo llega al correo registrado y el email no queda expuesto en la URL.' : 'Registra tu cuenta como personal de la clínica. Requiere un código de autorización y la aprobación de un administrador.' }}
+    </p>
+
+    <!-- Selector de Tipo de Registro -->
+    <div class="tab-buttons mt-5">
+      <button type="button" [class.activo]="tipoRegistro === 'cliente'" (click)="cambiarTipo('cliente')">
+        Soy Cliente
+      </button>
+      <button type="button" [class.activo]="tipoRegistro === 'personal'" (click)="cambiarTipo('personal')">
+        Soy Personal
+      </button>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <label class="sr-only" for="registro-nombres">Nombres</label>
+      <input id="registro-nombres" class="campo" placeholder="Nombres" [(ngModel)]="form.nombres" name="nombres" required>
+      <label class="sr-only" for="registro-apellidos">Apellidos</label>
+      <input id="registro-apellidos" class="campo" placeholder="Apellidos" [(ngModel)]="form.apellidos" name="apellidos" required>
+      <label class="sr-only" for="registro-email">Correo</label>
+      <input id="registro-email" class="campo sm:col-span-2" type="email" placeholder="Correo" [(ngModel)]="form.email" name="email" required>
+      <label class="sr-only" for="registro-telefono">Telefono</label>
+      <input id="registro-telefono" class="campo" placeholder="Telefono" [(ngModel)]="form.telefono" name="telefono">
+      <ng-container *ngIf="tipoRegistro === 'cliente'">
+        <label class="sr-only" for="registro-cedula">Número de cédula</label>
+        <input id="registro-cedula" class="campo" type="text" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" placeholder="Número de cédula (10 dígitos) *" [(ngModel)]="form.documento" name="documento" required>
+      </ng-container>
+      <label class="sr-only" for="registro-password">Contrasena</label>
+      <input id="registro-password" class="campo" type="password" autocomplete="new-password" placeholder="Contraseña" [(ngModel)]="form.password" name="password" required>
+      <label class="sr-only" for="registro-confirmar-password">Confirmar contraseña</label>
+      <input id="registro-confirmar-password" class="campo" type="password" autocomplete="new-password" placeholder="Confirmar contraseña" [(ngModel)]="confirmarPassword" name="confirmarPassword" required>
+      
+      <!-- Campos para Personal -->
+      <label class="sr-only" for="registro-rol-solicitado" *ngIf="tipoRegistro === 'personal'">Rol solicitado</label>
+      <select id="registro-rol-solicitado" class="campo sm:col-span-2" [(ngModel)]="form.rolSolicitado" name="rolSolicitado" *ngIf="tipoRegistro === 'personal'" required>
+        <option value="ROLE_RECEPCIONISTA">Recepcionista</option>
+        <option value="ROLE_VETERINARIO">Veterinario</option>
+      </select>
+      
+      <label class="sr-only" for="registro-codigo-admin" *ngIf="tipoRegistro === 'personal'">Codigo de autorizacion de administrador</label>
+      <input id="registro-codigo-admin" class="campo sm:col-span-2" type="password" inputmode="numeric" maxlength="6" placeholder="Código temporal de autorización (6 dígitos)" [(ngModel)]="codigoAdmin" name="codigoAdmin" required *ngIf="tipoRegistro === 'personal'">
+    </div>
+
+    <button class="boton-primario mt-6 w-full font-black" type="submit">
+      {{ tipoRegistro === 'cliente' ? 'Enviar solicitud y codigo' : 'Registrar y esperar aprobacion' }}
+    </button>
+    <p class="mt-4 text-sm font-bold text-rose-600 dark:text-rose-300" *ngIf="error">{{ error }}</p>
+    <a routerLink="/login" class="mt-5 block text-center text-sm font-bold text-cyan-700 dark:text-cyan-300">Ya tengo cuenta</a>
+  </form>
+
+  <!-- Pantalla de Éxito para Personal -->
+  <div class="panel w-full max-w-lg p-6 shadow-xl sm:p-7 text-center" *ngIf="solicitudEnviada">
+    <div style="margin: 0 auto 1.5rem auto; width: 4.5rem; height: 4.5rem; display: grid; place-items: center; border-radius: 9999px; background: rgba(16, 185, 129, 0.1); color: rgb(16, 185, 129);">
+      <svg xmlns="https://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 2.25rem; height: 2.25rem;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+      </svg>
+    </div>
+    <p class="text-sm font-black uppercase text-emerald-600 dark:text-emerald-400">Registro Exitoso</p>
+    <h1 class="mt-2 text-2xl font-black">Solicitud Recibida</h1>
+    <p class="mt-4 text-lg font-bold leading-6 text-slate-800 dark:text-slate-200">En espera de que un administrador acepte la solicitud</p>
+    <p class="mt-3 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+      Tu solicitud de registro para el personal de la clínica ha sido enviada. Los administradores revisarán y aprobarán tu cuenta en el panel administrativo.
+    </p>
+    <a routerLink="/login" class="boton-primario mt-6 w-full block text-center py-3 font-black">Volver a Inicio de Sesión</a>
+  </div>
+
+</main>

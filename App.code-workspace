@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "Backend-Proyecto-Lenguajes-main/Backend-Proyecto-Lenguajes-main",
+			"name": "VetSphere · Backend (Spring Boot)"
+		},
+		{
+			"path": "Frontend-Proyecto-Lenguajes-main/Frontend-Proyecto-Lenguajes-main",
+			"name": "VetSphere · Frontend (Angular)"
+		},
+		{
+			"path": "MiniProyecto-SOAP-master/MiniProyecto-SOAP-master",
+			"name": "VetSphere · Mini SOAP Client"
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "interactive",
+		"files.encoding": "utf8",
+		"editor.formatOnSave": true
+	}
+}
