@@ -7,7 +7,7 @@
 - **DB**: SQL Server Express local (default :1433). Schema `VeterinariaDB` expected.
 
 ## Run / Dev
-- **Start everything (Windows)**: `.\iniciar-todo.ps1` (or `INICIAR_TODO.bat`). Requires JDK 17+, SQL Server Express (`MSSQL$SQLEXPRESS`) on 1433. Starts backend (:8080), frontend (:4200), mini SOAP (:8090). Logs in `logs/`.
+- **Start everything (Windows)**: `.\iniciar-todo.ps1` (or `INICIAR_TODO.bat`). Requires JDK 17+, SQL Server Express (`MSSQL$SQLEXPRESS`) on 1433. Starts backend (:8080), frontend (:4200), mini SOAP (:8090). Logs default to `%TEMP%\VetSphere\logs`; set `VETSPHERE_LOG_DIR` to override.
 - **DB prep**: `Backend-Proyecto-Lenguajes-main/Backend-Proyecto-Lenguajes-main/scripts/Preparar-SqlServer.ps1` (creates/initializes DB/schema as needed).
 - **Backend only**: `Backend-Proyecto-Lenguajes-main/Backend-Proyecto-Lenguajes-main/iniciar-backend.ps1` (sets JAVA_HOME/JDK, runs Spring Boot).
 - **Frontend only**: `Frontend-Proyecto-Lenguajes-main/Frontend-Proyecto-Lenguajes-main/iniciar-frontend.ps1` or `npm start` from that folder (`ng serve --host 0.0.0.0 --port 4200`).

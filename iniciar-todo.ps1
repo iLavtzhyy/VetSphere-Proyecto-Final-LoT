@@ -1,7 +1,11 @@
 # Inicia SQL Server y los cuatro servicios de VetSphere en segundo plano.
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
-$logDir = Join-Path $root 'logs'
+$logDir = if ([string]::IsNullOrWhiteSpace($env:VETSPHERE_LOG_DIR)) {
+    Join-Path $env:TEMP 'VetSphere\logs'
+} else {
+    [System.IO.Path]::GetFullPath($env:VETSPHERE_LOG_DIR)
+}
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 
 function Test-PortListening([int]$Port) {
@@ -92,7 +96,7 @@ foreach ($service in $services) {
         Write-Host "$($service.Name): listo en http://localhost:$($service.Port)" -ForegroundColor Green
     } else {
         $allReady = $false
-        Write-Host "$($service.Name): no abrió el puerto $($service.Port). Revisa logs\$($service.Name -replace ' ', '-').err.log y .out.log" -ForegroundColor Red
+        Write-Host "$($service.Name): no abrió el puerto $($service.Port). Revisa $logDir\$($service.Name -replace ' ', '-').err.log y .out.log" -ForegroundColor Red
     }
 }
 

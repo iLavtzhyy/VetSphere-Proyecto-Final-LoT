@@ -37,7 +37,7 @@ Frontend-Proyecto-Lenguajes-main/Frontend-Proyecto-Lenguajes-main/ Aplicación A
 MiniProyecto-SOAP-master/MiniProyecto-SOAP-master/               Servicio SOAP auxiliar
 iot-cadena-frio/                                                   Servicio FastAPI del módulo IoT
 docs/                                                              Guías y documentación existente
-logs/                                                              Registros locales de ejecución
+%TEMP%\VetSphere\logs                                           Registros locales de ejecución
 docker-compose.yml                                                 Ejecución en contenedores
 iniciar-todo.ps1                                                   Arranque de todos los servicios locales
 ```
